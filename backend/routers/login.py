@@ -10,28 +10,15 @@ import sys
 import os
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
 
 # Import the shared Database singleton
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common.db import db_instance
+from common.models import LoginRequest, NewUserRequest
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["auth"])
 
-# ---------------------------------------------------------------------------
-# Pydantic schemas
-# ---------------------------------------------------------------------------
-
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-class NewUserRequest(BaseModel):
-    username: str
-    password: str
-    role: str = "user"   # 'admin' | 'user'
 
 
 # ---------------------------------------------------------------------------
