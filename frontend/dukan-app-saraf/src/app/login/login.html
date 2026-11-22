@@ -1,0 +1,141 @@
+<div class="login-page">
+  <div class="login-card">
+
+    <!-- Brand -->
+    <div class="brand">
+      <div class="brand-icon" aria-label="Dukan App">
+        <svg viewBox="0 0 24 24" role="img" aria-hidden="true">
+          <path d="M4 10v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-9M3 10l2-6h14l2 6M3 10a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0M9 20v-6h6v6" />
+        </svg>
+      </div>
+      <h1 class="brand-name">Saraf</h1>
+      <p class="brand-sub">The B to B moneylending app</p>
+    </div>
+
+    <!-- Login Form -->
+    <form class="login-form" (ngSubmit)="onSubmit()" novalidate>
+      <h2 class="form-title">Sign in to your account</h2>
+
+      @if (errorMsg()) {
+        <div class="alert alert-error" role="alert">
+          <span class="alert-icon">⚠️</span> {{ errorMsg() }}
+        </div>
+      }
+
+      <div class="field">
+        <label for="username" class="field-label">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input id="username" type="text" class="field-input"
+            placeholder="Enter your username"
+            [(ngModel)]="username" name="username"
+            autocomplete="username" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="password" class="field-label">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input id="password" [type]="showPwd() ? 'text' : 'password'" class="field-input"
+            placeholder="Enter your password"
+            [(ngModel)]="password" name="password"
+            autocomplete="current-password" required />
+          <button type="button" class="pwd-toggle" (click)="togglePassword()"
+            [attr.aria-label]="showPwd() ? 'Hide password' : 'Show password'">
+            @if (showPwd()) {
+              <!-- FontAwesome eye-slash (solid) in SVG format -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" aria-hidden="true">
+                <path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7l-86.4-67.7C577.8 368.5 608 328.8 624 304c10.7-16.5 10.7-35.5 0-52-44-67.6-136.6-156-304-156-42.3 0-81.8 5.8-116.7 16L93.7 18.2C85.5 11.8 74.2 8.4 63.8 8.4c-8.9 0-17.7 2.7-25 8.3L38.8 5.1zM288 206.5l81.5 63.8c-.8 5.2-3.1 9.9-6.7 13.5-9.4 9.4-24.6 9.4-33.9 0-9.4-9.4-9.4-24.6 0-33.9 3.6-3.6 8.3-5.9 13.5-6.7L288 206.5zm-86.2 36.3L159.2 209C139.7 232.7 128 262.1 128 288c0 70.7 57.3 128 128 128 25.9 0 55.3-11.7 79-31.2l-33.8-26.5c-13.4 6.2-28.5 9.7-45.2 9.7-53 0-96-43-96-96 0-16.7 3.5-31.8 9.7-45.2zM320 144c132.5 0 216 76 256 128-14.7 19.1-38.6 44.9-72.3 68.3L442.2 291C446 280.3 448 268.4 448 256c0-70.7-57.3-128-128-128-12.4 0-24.3 2-35 5.8l-49.4-38.7C261.8 147.8 290.4 144 320 144zM48 288c0-14.4 3.7-28.8 9.7-42.2L12.5 210.8C4.3 228.6 0 248.1 0 268c0 16.5 10.7 35.5 21.4 52 44 67.6 136.6 156 304 156 40.8 0 79.1-5.4 113.2-15.1l-44.8-35.1C366 430.7 343.4 432 320 432c-132.5 0-216-76-256-128-5.6-7.3-12-16.7-16-24z"/>
+              </svg>
+            } @else {
+              <!-- FontAwesome eye (solid) in SVG format -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" aria-hidden="true">
+                <path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1 3.3-7.9 3.3-16.7 0-24.6-14.8-35.7-46.1-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 49.3 63.6 77.2 112.9 63.5s77.2-63.6 63.5-112.9c-10.4-37.4-44.5-64.6-83.6-67.4c-5.8-.4-9.3 5.9-7.4 11.4c2.2 6.4 3.4 13.2 3.4 20.3z"/>
+              </svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-primary" [disabled]="loading()">
+        @if (loading()) { <span class="spinner"></span> Signing in… }
+        @else { Sign In }
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="divider"><span>Admin Actions</span></div>
+
+    <!-- Create User Button -->
+    <button class="btn-outline" type="button" (click)="openVerifyModal()">
+      ➕ Create New User
+    </button>
+
+    <p class="footer-hint">Admin verification required to create users.</p>
+  </div>
+</div>
+
+<!-- ── Admin Verify Modal ──────────────────────────────────────────────── -->
+@if (showVerifyModal()) {
+  <div class="modal-backdrop" (click)="closeVerifyModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div class="modal-icon">🛡️</div>
+        <h3 class="modal-title">Admin Verification</h3>
+        <p class="modal-sub">Enter your admin credentials to continue.</p>
+      </div>
+
+      @if (verifyError()) {
+        <div class="alert alert-error" role="alert">
+          <span class="alert-icon">⚠️</span> {{ verifyError() }}
+        </div>
+      }
+
+      <div class="field">
+        <label for="adminUsername" class="field-label">Admin Username</label>
+        <div class="input-wrap">
+          <span class="input-icon">👤</span>
+          <input id="adminUsername" type="text" class="field-input"
+            placeholder="Admin username"
+            [(ngModel)]="adminUsername" name="adminUsername" required />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="adminPassword" class="field-label">Admin Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input id="adminPassword" [type]="showAdminPwd() ? 'text' : 'password'" class="field-input"
+            placeholder="Admin password"
+            [(ngModel)]="adminPassword" name="adminPassword" required />
+          <button type="button" class="pwd-toggle" (click)="toggleAdminPwd()"
+            [attr.aria-label]="showAdminPwd() ? 'Hide password' : 'Show password'">
+            @if (showAdminPwd()) {
+              <!-- FontAwesome eye-slash (solid) in SVG format -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" aria-hidden="true">
+                <path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7l-86.4-67.7C577.8 368.5 608 328.8 624 304c10.7-16.5 10.7-35.5 0-52-44-67.6-136.6-156-304-156-42.3 0-81.8 5.8-116.7 16L93.7 18.2C85.5 11.8 74.2 8.4 63.8 8.4c-8.9 0-17.7 2.7-25 8.3L38.8 5.1zM288 206.5l81.5 63.8c-.8 5.2-3.1 9.9-6.7 13.5-9.4 9.4-24.6 9.4-33.9 0-9.4-9.4-9.4-24.6 0-33.9 3.6-3.6 8.3-5.9 13.5-6.7L288 206.5zm-86.2 36.3L159.2 209C139.7 232.7 128 262.1 128 288c0 70.7 57.3 128 128 128 25.9 0 55.3-11.7 79-31.2l-33.8-26.5c-13.4 6.2-28.5 9.7-45.2 9.7-53 0-96-43-96-96 0-16.7 3.5-31.8 9.7-45.2zM320 144c132.5 0 216 76 256 128-14.7 19.1-38.6 44.9-72.3 68.3L442.2 291C446 280.3 448 268.4 448 256c0-70.7-57.3-128-128-128-12.4 0-24.3 2-35 5.8l-49.4-38.7C261.8 147.8 290.4 144 320 144zM48 288c0-14.4 3.7-28.8 9.7-42.2L12.5 210.8C4.3 228.6 0 248.1 0 268c0 16.5 10.7 35.5 21.4 52 44 67.6 136.6 156 304 156 40.8 0 79.1-5.4 113.2-15.1l-44.8-35.1C366 430.7 343.4 432 320 432c-132.5 0-216-76-256-128-5.6-7.3-12-16.7-16-24z"/>
+              </svg>
+            } @else {
+              <!-- FontAwesome eye (solid) in SVG format -->
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" aria-hidden="true">
+                <path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1 3.3-7.9 3.3-16.7 0-24.6-14.8-35.7-46.1-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM144 256a144 144 0 1 1 288 0 144 144 0 1 1 -288 0zm144-64c0 35.3-28.7 64-64 64c-7.1 0-13.9-1.2-20.3-3.3c-5.5-1.8-11.9 1.6-11.7 7.4c.3 6.9 1.3 13.8 3.2 20.7c13.7 49.3 63.6 77.2 112.9 63.5s77.2-63.6 63.5-112.9c-10.4-37.4-44.5-64.6-83.6-67.4c-5.8-.4-9.3 5.9-7.4 11.4c2.2 6.4 3.4 13.2 3.4 20.3z"/>
+              </svg>
+            }
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" type="button" (click)="closeVerifyModal()">Cancel</button>
+        <button class="btn-primary" type="button"
+          [disabled]="verifyLoading()" (click)="verifyAdmin()">
+          @if (verifyLoading()) { <span class="spinner"></span> Verifying… }
+          @else { Verify & Continue }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

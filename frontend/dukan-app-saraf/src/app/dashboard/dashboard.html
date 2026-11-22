@@ -1,0 +1,344 @@
+<div class="dashboard-page">
+
+  <!-- ── Top Header / Navbar ──────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="brand-icon">🏪</span>
+        <div class="brand-text">
+          <span class="brand-title">Dukan App</span>
+          <span class="brand-sub">B2B Portal</span>
+        </div>
+      </div>
+
+      <div class="user-controls">
+        <div class="user-badge">
+          <span class="user-avatar-mini">{{ getInitial(username) }}</span>
+          <span class="username-label">{{ username }}</span>
+          @if (role === 'admin') {
+            <span class="admin-tag">Admin</span>
+          }
+        </div>
+        <button type="button" class="btn-logout" (click)="logout()" title="Sign Out">
+          Sign Out
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ── 1. Top Stats Cards (Clients Count, Last Edited, Last Accessed) ── -->
+    <section class="stats-grid">
+      <!-- Total Clients Card -->
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-icon-purple">
+          <span class="stat-icon">👥</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Total Clients</span>
+          <div class="stat-value">{{ stats()?.total ?? 0 }}</div>
+          <span class="stat-sub">Active in your account</span>
+        </div>
+      </div>
+
+      <!-- Last Edited Client Card -->
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-icon-cyan">
+          <span class="stat-icon">✏️</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Last Edited Client</span>
+          <div class="stat-value text-highlight">
+            {{ stats()?.last_edited?.name || 'None' }}
+          </div>
+          <span class="stat-sub">
+            @if (stats()?.last_edited) {
+              Edited {{ formatRelative(stats()?.last_edited?.last_edited_at) }}
+            } @else {
+              No edits recorded yet
+            }
+          </span>
+        </div>
+      </div>
+
+      <!-- Last Accessed Client Card -->
+      <div class="stat-card">
+        <div class="stat-icon-wrap stat-icon-pink">
+          <span class="stat-icon">👁️</span>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">Last Accessed Client</span>
+          <div class="stat-value text-highlight">
+            {{ stats()?.last_accessed?.name || 'None' }}
+          </div>
+          <span class="stat-sub">
+            @if (stats()?.last_accessed) {
+              Accessed {{ formatRelative(stats()?.last_accessed?.last_accessed_at) }}
+            } @else {
+              No client opened yet
+            }
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── 2. Action Toolbar: Title + Add Client Button ────────────── -->
+    <div class="toolbar">
+      <div class="toolbar-title-group">
+        <h2 class="section-title">Client Directory</h2>
+        <span class="section-subtitle">Manage and access your registered B2B clients</span>
+      </div>
+
+      <button type="button" class="btn-add-client" (click)="openAddModal()">
+        <span class="plus-sign">+</span>
+        <span>Add Client</span>
+      </button>
+    </div>
+
+    <!-- Error Banner -->
+    @if (error()) {
+      <div class="alert alert-error" role="alert">
+        <span class="alert-icon">⚠️</span>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <!-- ── Loading Skeleton ─────────────────────────────────────────── -->
+    @if (loading()) {
+      <div class="clients-grid">
+        @for (item of [1, 2, 3, 4]; track item) {
+          <div class="client-card skeleton-card">
+            <div class="skeleton-avatar"></div>
+            <div class="skeleton-lines">
+              <div class="skeleton-line full"></div>
+              <div class="skeleton-line half"></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ── Empty State ──────────────────────────────────────────────── -->
+    @if (!loading() && clients().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">📁</div>
+        <h3 class="empty-title">No clients found</h3>
+        <p class="empty-desc">Get started by creating your first client record.</p>
+        <button type="button" class="btn-add-client empty-btn" (click)="openAddModal()">
+          + Add Your First Client
+        </button>
+      </div>
+    }
+
+    <!-- ── 3. Client Cards Grid (Profile pic = Initial Letter) ─────── -->
+    @if (!loading() && clients().length > 0) {
+      <div class="clients-grid">
+        @for (client of clients(); track client.id) {
+          <div
+            class="client-card"
+            [class.card-deleting]="deletingId() === client.id"
+            (click)="onClientClick(client)"
+          >
+            <!-- Card Header: Profile Initial + Delete Action -->
+            <div class="card-top">
+              <div
+                class="client-avatar"
+                [style.background]="getAvatarBackground(client.name)"
+              >
+                {{ getInitial(client.name) }}
+              </div>
+
+              @if (deletingId() !== client.id) {
+                <button
+                  type="button"
+                  class="btn-icon-delete"
+                  (click)="confirmDelete($event, client.id)"
+                  title="Delete Client"
+                >
+                  🗑️
+                </button>
+              } @else {
+                <div class="delete-prompt" (click)="$event.stopPropagation()">
+                  <span class="delete-text">Delete?</span>
+                  <button type="button" class="btn-del-yes" (click)="deleteClient($event, client.id)">Yes</button>
+                  <button type="button" class="btn-del-no" (click)="cancelDelete($event)">No</button>
+                </div>
+              }
+            </div>
+
+            <!-- Client Info Body -->
+            <div class="card-body">
+              <h3 class="client-name" [title]="client.name">{{ client.name }}</h3>
+
+              <div class="info-row">
+                <span class="info-icon">📍</span>
+                <span class="info-text">{{ client.address || 'No address provided' }}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-icon">📞</span>
+                <span class="info-text">{{ client.contact_number || 'No contact number' }}</span>
+              </div>
+            </div>
+
+            <!-- Card Footer: Timestamps -->
+            <div class="card-footer">
+              <span class="time-tag">
+                🕒 Edited {{ formatRelative(client.last_edited_at) }}
+              </span>
+              @if (client.last_accessed_at) {
+                <span class="accessed-tag" title="Last Accessed">
+                  👁️ {{ formatRelative(client.last_accessed_at) }}
+                </span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     Add Client Modal Prompt (Name, Address, Contact Number)
+     ══════════════════════════════════════════════════════════════════ -->
+@if (showAddModal()) {
+  <div class="modal-backdrop" (click)="closeAddModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <div class="modal-icon">👥</div>
+        <h3 class="modal-title">Add New Client</h3>
+        <p class="modal-subtitle">Enter client details to register them under your account</p>
+      </div>
+
+      @if (addError()) {
+        <div class="alert alert-error" role="alert">
+          <span class="alert-icon">⚠️</span>
+          <span>{{ addError() }}</span>
+        </div>
+      }
+      @if (addSuccess()) {
+        <div class="alert alert-success" role="alert">
+          <span class="alert-icon">✅</span>
+          <span>{{ addSuccess() }}</span>
+        </div>
+      }
+
+      <form class="modal-form" (ngSubmit)="submitAddClient()" novalidate>
+        <!-- Name -->
+        <div class="field">
+          <label for="clientName" class="field-label">Client Name *</label>
+          <div class="input-wrap">
+            <span class="input-icon">🏢</span>
+            <input
+              id="clientName"
+              type="text"
+              class="field-input"
+              placeholder="e.g. Reliance Retail / Hubstaff Inc."
+              [(ngModel)]="newName"
+              name="clientName"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Address -->
+        <div class="field">
+          <label for="clientAddress" class="field-label">Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">📍</span>
+            <input
+              id="clientAddress"
+              type="text"
+              class="field-input"
+              placeholder="e.g. Plot 12, Industrial Area, Mumbai"
+              [(ngModel)]="newAddress"
+              name="clientAddress"
+            />
+          </div>
+        </div>
+
+        <!-- Contact Number -->
+        <div class="field">
+          <label for="clientContact" class="field-label">Contact Number</label>
+          <div class="input-wrap">
+            <span class="input-icon">📞</span>
+            <input
+              id="clientContact"
+              type="text"
+              class="field-input"
+              placeholder="e.g. +91 98765 43210"
+              [(ngModel)]="newContact"
+              name="clientContact"
+            />
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" (click)="closeAddModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="addLoading()">
+            @if (addLoading()) {
+              <span class="spinner"></span> Creating...
+            } @else {
+              Create Client
+            }
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════
+     Client Detail Modal (Opened on Card Click, triggers last_accessed)
+     ══════════════════════════════════════════════════════════════════ -->
+@if (selectedClient()) {
+  <div class="modal-backdrop" (click)="closeDetailModal()">
+    <div class="modal-card detail-card" (click)="$event.stopPropagation()">
+
+      <div class="detail-header">
+        <div
+          class="client-avatar-lg"
+          [style.background]="getAvatarBackground(selectedClient()!.name)"
+        >
+          {{ getInitial(selectedClient()!.name) }}
+        </div>
+        <h3 class="detail-name">{{ selectedClient()!.name }}</h3>
+        <span class="detail-owner">Managed by {{ selectedClient()!.owner_username }}</span>
+      </div>
+
+      <div class="detail-body">
+        <div class="detail-field">
+          <span class="detail-field-label">Address</span>
+          <span class="detail-field-value">{{ selectedClient()!.address || 'None' }}</span>
+        </div>
+
+        <div class="detail-field">
+          <span class="detail-field-label">Contact Number</span>
+          <span class="detail-field-value">{{ selectedClient()!.contact_number || 'None' }}</span>
+        </div>
+
+        <div class="detail-field">
+          <span class="detail-field-label">Last Edited</span>
+          <span class="detail-field-value">{{ formatRelative(selectedClient()!.last_edited_at) }}</span>
+        </div>
+
+        <div class="detail-field">
+          <span class="detail-field-label">Last Accessed</span>
+          <span class="detail-field-value">{{ formatRelative(selectedClient()!.last_accessed_at) }}</span>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-primary full-width" (click)="closeDetailModal()">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
