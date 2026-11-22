@@ -49,3 +49,28 @@ html, body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
+
+/* ─── Global FontAwesome SVG standard styles (gemini.md) ──────────────── */
+svg[xmlns="http://www.w3.org/2000/svg"] {
+  fill: currentColor;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.svg-icon {
+  width: 1em;
+  height: 1em;
+}
+
+.btn-icon-svg {
+  width: 0.9em;
+  height: 0.9em;
+}
+
+.hint-icon-svg {
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.25rem;
+  vertical-align: -0.1em;
+}
+

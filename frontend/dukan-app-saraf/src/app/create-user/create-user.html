@@ -4,10 +4,10 @@
     <!-- Header -->
     <div class="page-header">
       <button class="btn-back" type="button" (click)="goBack()" aria-label="Back to login">
-        ← Back
+        <svg class="btn-back-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg> Back
       </button>
       <div class="header-center">
-        <div class="header-icon">👤</div>
+        <div class="header-icon"><svg class="header-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/></svg></div>
         <h1 class="page-title">Create New User</h1>
         <p class="page-sub">Logged in as admin: <strong>{{ adminUser }}</strong></p>
       </div>
@@ -16,12 +16,12 @@
     <!-- Alerts -->
     @if (errorMsg()) {
       <div class="alert alert-error" role="alert">
-        <span>⚠️</span> {{ errorMsg() }}
+        <span class="alert-icon"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true"><path d="M256 32c14.2 0 27.3 7.5 34.5 19.8l216 368c7.3 12.4 7.3 27.7 .2 40.1S486.3 480 472 480L40 480c-14.3 0-27.6-7.7-34.7-20.1s-7-27.8 .2-40.1l216-368C228.7 39.5 241.8 32 256 32zm0 128c-13.3 0-24 10.7-24 24l0 112c0 13.3 10.7 24 24 24s24-10.7 24-24l0-112c0-13.3-10.7-24-24-24zm32 224a32 32 0 1 0 -64 0 32 32 0 1 0 64 0z"/></svg></span> {{ errorMsg() }}
       </div>
     }
     @if (successMsg()) {
       <div class="alert alert-success" role="alert">
-        <span>✅</span> {{ successMsg() }}
+        <span class="alert-icon"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg></span> {{ successMsg() }}
       </div>
     }
 
@@ -32,7 +32,7 @@
       <div class="field">
         <label for="newUsername" class="field-label">Username</label>
         <div class="input-wrap">
-          <span class="input-icon">👤</span>
+          <span class="input-icon"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512l388.6 0c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304l-91.4 0z"/></svg></span>
           <input id="newUsername" type="text" class="field-input"
             placeholder="Enter username"
             [(ngModel)]="newUsername" name="newUsername" required />
@@ -44,7 +44,7 @@
       <div class="field">
         <label for="newPassword" class="field-label">Password</label>
         <div class="input-wrap">
-          <span class="input-icon">🔒</span>
+          <span class="input-icon"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M144 144l0 48 160 0 0-48c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192l0-48C80 64.5 144.5 0 224 0s144 64.5 144 144l0 48 16 0c35.3 0 64 28.7 64 64l0 192c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 256c0-35.3 28.7-64 64-64l16 0z"/></svg></span>
           <input id="newPassword" [type]="showPwd() ? 'text' : 'password'" class="field-input"
             placeholder="Min. 3 characters"
             [(ngModel)]="newPassword" name="newPassword" required />
@@ -69,7 +69,7 @@
       <div class="field">
         <label for="confirmPwd" class="field-label">Confirm Password</label>
         <div class="input-wrap">
-          <span class="input-icon">🔒</span>
+          <span class="input-icon"><svg class="svg-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M144 144l0 48 160 0 0-48c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192l0-48C80 64.5 144.5 0 224 0s144 64.5 144 144l0 48 16 0c35.3 0 64 28.7 64 64l0 192c0 35.3-28.7 64-64 64L64 512c-35.3 0-64-28.7-64-64L0 256c0-35.3 28.7-64 64-64l16 0z"/></svg></span>
           <input id="confirmPwd" [type]="showConfirm() ? 'text' : 'password'" class="field-input"
             placeholder="Re-enter password"
             [(ngModel)]="confirmPwd" name="confirmPwd" required />
@@ -92,7 +92,7 @@
           <span class="field-hint error">Passwords do not match</span>
         }
         @if (newPassword && confirmPwd && newPassword === confirmPwd) {
-          <span class="field-hint success">✓ Passwords match</span>
+          <span class="field-hint success"><svg class="hint-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg> Passwords match</span>
         }
       </div>
 

@@ -68,6 +68,15 @@
 .brand-icon {
   font-size: 1.8rem;
   filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.6));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--purple-light);
+
+  .brand-icon-svg {
+    width: 1.8rem;
+    height: 1.8rem;
+  }
 }
 
 .brand-text {
@@ -205,6 +214,14 @@
 
   .stat-icon {
     font-size: 1.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .stat-icon-svg {
+      width: 1.6rem;
+      height: 1.6rem;
+    }
   }
 }
 
@@ -212,18 +229,21 @@
   background: rgba(124, 58, 237, 0.18);
   border: 1px solid rgba(124, 58, 237, 0.35);
   box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+  color: var(--purple-light);
 }
 
 .stat-icon-cyan {
   background: rgba(6, 182, 212, 0.18);
   border: 1px solid rgba(6, 182, 212, 0.35);
   box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+  color: var(--cyan);
 }
 
 .stat-icon-pink {
   background: rgba(236, 72, 153, 0.18);
   border: 1px solid rgba(236, 72, 153, 0.35);
   box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
+  color: var(--pink);
 }
 
 .stat-content {
@@ -385,11 +405,21 @@
   padding: 0.4rem;
   border-radius: 8px;
   opacity: 0.4;
-  transition: opacity 0.15s, background 0.15s;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .delete-icon-svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
 
   &:hover {
     opacity: 1;
     background: rgba(248, 113, 113, 0.15);
+    color: var(--danger);
   }
 }
 
@@ -455,6 +485,15 @@
 .info-icon {
   font-size: 0.85rem;
   opacity: 0.75;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--purple-light);
+
+  .info-icon-svg {
+    width: 0.85rem;
+    height: 0.85rem;
+  }
 }
 
 .info-text {
@@ -477,11 +516,27 @@
 
 .time-tag {
   color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  .time-icon-svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
 }
 
 .accessed-tag {
   color: var(--cyan);
   font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  .accessed-icon-svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
 }
 
 /* ─── Skeleton Loading ───────────────────────────────────────────── */
@@ -538,6 +593,15 @@
   font-size: 3.5rem;
   margin-bottom: 0.8rem;
   opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--purple-light);
+
+  .empty-icon-svg {
+    width: 3.5rem;
+    height: 3.5rem;
+  }
 }
 
 .empty-title {
@@ -628,8 +692,16 @@
   font-size: 2.25rem;
   line-height: 1;
   margin-bottom: 0.4rem;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.5));
+  color: var(--purple-light);
+
+  .modal-icon-svg {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
 }
 
 .modal-title {
