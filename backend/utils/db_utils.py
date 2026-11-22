@@ -1,12 +1,21 @@
-"""Database utility functions for managing clients in the FastAPI application."""
-from common.models import ClientCreate, ClientUpdate, ClientOut, StatsOut
-from common.constants import ROW_COLS
+"""
+db_utils.py — Database utility functions for managing clients.
+"""
+
 from fastapi import HTTPException
+
+from common.constants import ROW_COLS
+from common.models import ClientCreate, ClientOut, ClientUpdate, StatsOut
+
 
 # ---------------------------------------------------------------------------
 # Helper
 # ---------------------------------------------------------------------------
-def _row_to_client(row) -> ClientOut:
+
+def _row_to_client(row: tuple | list | None) -> ClientOut:
+    """Map a database row tuple to a ClientOut Pydantic model."""
+    if not row:
+        raise ValueError("Cannot convert empty row to ClientOut.")
     return ClientOut(
         id=row[0],
         owner_username=row[1],
@@ -17,7 +26,9 @@ def _row_to_client(row) -> ClientOut:
         last_edited_at=row[6],
         last_accessed_at=row[7],
     )
-def get_all_clients_stats(username: str, conn):
+
+
+def get_all_clients_stats(username: str, conn) -> StatsOut:
     """Return total count, last edited client, and last accessed client for a given username."""
     with conn.cursor() as cur:
         # total
@@ -50,19 +61,22 @@ def get_all_clients_stats(username: str, conn):
         last_accessed=_row_to_client(la_row) if la_row else None,
     )
 
-def list_all_clients(username: str, conn):
+
+def list_all_clients(username: str, conn) -> list[ClientOut]:
     """Return a list of all clients for a given username, ordered by last_edited_at descending."""
     with conn.cursor() as cur:
         cur.execute(
             (
-            f"SELECT {ROW_COLS} FROM clients WHERE owner_username = %s ORDER BY last_edited_at DESC"
+                f"SELECT {ROW_COLS} FROM clients "
+                "WHERE owner_username = %s ORDER BY last_edited_at DESC"
             ),
             (username,),
         )
         rows = cur.fetchall()
     return [_row_to_client(r) for r in rows]
 
-def create_client_db(body: ClientCreate, username: str, conn):
+
+def create_client_db(body: ClientCreate, username: str, conn) -> ClientOut:
     """Create a new client for a given username."""
     with conn.cursor() as cur:
         cur.execute(
@@ -77,7 +91,8 @@ def create_client_db(body: ClientCreate, username: str, conn):
     conn.commit()
     return _row_to_client(row)
 
-def get_client_by_id(client_id: int, username: str, conn):
+
+def get_client_by_id(client_id: int, username: str, conn) -> ClientOut:
     """Retrieve a client by ID for a given username. Updates last_accessed_at."""
     with conn.cursor() as cur:
         cur.execute(
@@ -95,7 +110,8 @@ def get_client_by_id(client_id: int, username: str, conn):
     conn.commit()
     return _row_to_client(row)
 
-def update_client(client_id: int, body: ClientUpdate, username: str, conn):
+
+def update_client_db(client_id: int, body: ClientUpdate, username: str, conn) -> ClientOut:
     """Update a client by ID for a given username."""
     with conn.cursor() as cur:
         cur.execute(
@@ -122,7 +138,8 @@ def update_client(client_id: int, body: ClientUpdate, username: str, conn):
     conn.commit()
     return _row_to_client(row)
 
-def delete_client(client_id: int, username: str, conn):
+
+def delete_client_db(client_id: int, username: str, conn) -> dict[str, str]:
     """Delete a client by ID for a given username."""
     with conn.cursor() as cur:
         cur.execute(
@@ -133,3 +150,9 @@ def delete_client(client_id: int, username: str, conn):
             raise HTTPException(status_code=404, detail="Client not found.")
     conn.commit()
     return {"message": "Client deleted successfully."}
+
+
+# Backward compatibility aliases
+create_client = create_client_db
+update_client = update_client_db
+delete_client = delete_client_db

@@ -6,19 +6,19 @@ POST /users    — add a new user (admin only)
 """
 
 import logging
-import sys
 import os
+import sys
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-# Import the shared Database singleton
-from common.db import db_instance
-from common.models import LoginRequest, NewUserRequest
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+# Import the shared Database singleton
+from common.db import db_instance  # noqa: E402
+from common.models import LoginRequest, NewUserRequest  # noqa: E402
+
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["auth"])
-
 
 
 # ---------------------------------------------------------------------------

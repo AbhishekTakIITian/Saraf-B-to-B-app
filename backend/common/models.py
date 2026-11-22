@@ -2,12 +2,15 @@
 Models for the FastAPI application, including Pydantic schemas for request and response validation.
 """
 from datetime import datetime
+
 from pydantic import BaseModel
 
 # ---------------------------------------------------------------------------
 # Schemas for client management
 # ---------------------------------------------------------------------------
-#pylint:disable=missing-class-docstring
+# pylint: disable=missing-class-docstring
+
+
 class ClientCreate(BaseModel):
     name: str
     address: str | None = None
@@ -49,4 +52,4 @@ class LoginRequest(BaseModel):
 class NewUserRequest(BaseModel):
     username: str
     password: str
-    role: str = "user"   # 'admin' | 'user'
+    role: str = "user"  # 'admin' | 'user'

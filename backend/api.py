@@ -1,11 +1,17 @@
+"""
+api.py — FastAPI application entry point for Dukan App B-To-B.
+"""
+
 import logging
-import fastapi
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import login, clients
+
+from routers import clients, login
 
 logging.basicConfig(level=logging.INFO)
 
-app = fastapi.FastAPI(title="Dukan App B-To-B API")
+app = FastAPI(title="Dukan App B-To-B API")
 
 # ── CORS ────────────────────────────────────────────────────────────────────
 # Allow the Angular dev server (port 4200) to call the API.
@@ -22,6 +28,8 @@ app.add_middleware(
 app.include_router(login.router)
 app.include_router(clients.router)
 
+
 @app.get("/health")
 async def health_check():
+    """Health check endpoint returning service status."""
     return {"status": "healthy"}

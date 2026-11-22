@@ -195,7 +195,8 @@ class Database:
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS clients (
                         id               SERIAL PRIMARY KEY,
-                        owner_username   VARCHAR(100) NOT NULL REFERENCES login(username) ON DELETE CASCADE,
+                        owner_username   VARCHAR(100) NOT NULL
+                                         REFERENCES login(username) ON DELETE CASCADE,
                         name             VARCHAR(200) NOT NULL,
                         address          TEXT,
                         contact_number   VARCHAR(30),
