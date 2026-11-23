@@ -274,7 +274,7 @@ export class DashboardComponent implements OnInit {
   }
 
   submitAddDataEntry(): void {
-    if (this.newEntryNumber === null || this.newEntryJwelleryValue === null || !this.newEntryDescription.trim()) {
+    if (this.newEntryNumber === null || this.newEntryJwelleryValue === null) {
       this.addDataError.set('Number, jewellery value, and description are required.');
       return;
     }

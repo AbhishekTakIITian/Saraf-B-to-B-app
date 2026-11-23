@@ -80,7 +80,7 @@ class GetClientDataEntryResponse(BaseModel):
     client_id: int
     number: int
     jwellery_value: float
-    description: str
+    description: Optional[str] = ""
     date_created: Optional[datetime] = None
     date_updated: Optional[datetime] = None
     date_completed: Optional[datetime] = None
