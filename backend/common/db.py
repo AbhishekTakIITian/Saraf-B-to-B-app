@@ -210,6 +210,25 @@ class Database:
         finally:
             conn.close()
 
+    def _ensure_client_data_table(self) -> None:
+        """Create the `clients_data` table inside the application database if absent."""
+        conn = self._app_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS client_data (
+                        id               SERIAL PRIMARY KEY,
+                        client_id        INT NOT NULL
+                                         REFERENCES clients(id) ON DELETE CASCADE,
+                        data             JSONB NOT NULL,
+                        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    )
+                """)
+                logger.info("[DB] Table 'client_data' is ready.")
+            conn.commit()
+        finally:
+            conn.close()
+
     def _bootstrap(self) -> None:
         """Run all initialisation steps in order."""
         logger.info("[DB] Starting database bootstrap …")
@@ -217,6 +236,7 @@ class Database:
         self._ensure_login_table()
         self._seed_admin()
         self._ensure_clients_table()
+        self._ensure_client_data_table()
         logger.info("[DB] Bootstrap complete. %r", self)
 
     # ------------------------------------------------------------------

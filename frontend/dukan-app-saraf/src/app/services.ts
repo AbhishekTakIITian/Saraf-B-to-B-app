@@ -52,6 +52,35 @@ export interface ClientUpdate {
   contact_number?: string;
 }
 
+export interface ClientDataEntry {
+  id: number;
+  client_id: number;
+  number: number;
+  jwellery_value: number;
+  description: string;
+  date_created: string | null;
+  date_updated: string | null;
+  date_completed: string | null;
+  final_value: number | null;
+}
+
+export interface ClientDataCreate {
+  number: number;
+  jwellery_value: number;
+  description: string;
+}
+
+export interface ClientDataUpdate {
+  number?: number;
+  jwellery_value?: number;
+  description?: string;
+  final_value?: number;
+}
+
+export interface CompleteDataEntry {
+  final_value: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   /** Base URL of the FastAPI backend — override via environment file for prod */
@@ -137,6 +166,64 @@ export class ApiService {
   deleteClient(clientId: number, username: string): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/clients/${clientId}?username=${encodeURIComponent(username)}`,
+    );
+  }
+
+  /**
+   * GET /clients/{client_id}/data
+   * Fetches all data entries for a client.
+   */
+  getClientData(clientId: number, username: string): Observable<ClientDataEntry[]> {
+    return this.http.get<ClientDataEntry[]>(
+      `${this.baseUrl}/clients/${clientId}/data?username=${encodeURIComponent(username)}`,
+    );
+  }
+
+  /**
+   * POST /clients/{client_id}/data
+   * Creates a new data entry for a client.
+   */
+  createClientData(clientId: number, payload: ClientDataCreate, username: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.baseUrl}/clients/${clientId}/data?username=${encodeURIComponent(username)}`,
+      payload,
+    );
+  }
+
+  /**
+   * PUT /clients/{client_id}/data/{entry_id}
+   * Updates an existing data entry for a client.
+   */
+  updateClientData(
+    clientId: number,
+    entryId: number,
+    payload: ClientDataUpdate,
+    username: string,
+  ): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(
+      `${this.baseUrl}/clients/${clientId}/data/${entryId}?username=${encodeURIComponent(username)}`,
+      payload,
+    );
+  }
+
+  /**
+   * PUT /clients/{client_id}/data/{entry_id}/complete
+   * Marks a data entry as complete, setting final_value, date_completed, date_updated.
+   */
+  completeClientData(clientId: number, entryId: number, payload: CompleteDataEntry, username: string): Observable<{ message: string }> {
+    return this.http.put<{ message: string }>(
+      `${this.baseUrl}/clients/${clientId}/data/${entryId}/complete?username=${encodeURIComponent(username)}`,
+      payload,
+    );
+  }
+
+  /**
+   * DELETE /clients/{client_id}/data/{entry_id}
+   * Deletes a data entry for a client.
+   */
+  deleteClientData(clientId: number, entryId: number, username: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.baseUrl}/clients/${clientId}/data/${entryId}?username=${encodeURIComponent(username)}`,
     );
   }
 }

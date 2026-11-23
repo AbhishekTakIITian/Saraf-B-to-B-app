@@ -2,7 +2,16 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ApiService, Client, ClientStats, ClientCreate } from '../services';
+import {
+  ApiService,
+  Client,
+  ClientStats,
+  ClientCreate,
+  ClientDataEntry,
+  ClientDataCreate,
+  ClientDataUpdate,
+  CompleteDataEntry,
+} from '../services';
 
 @Component({
   selector: 'app-dashboard',
@@ -20,7 +29,7 @@ export class DashboardComponent implements OnInit {
   loading = signal(true);
   error = signal('');
 
-  // Add Client Modal
+  // ── Add Client Modal ───────────────────────────────────────────────
   showAddModal = signal(false);
   addLoading = signal(false);
   addError = signal('');
@@ -29,10 +38,39 @@ export class DashboardComponent implements OnInit {
   newAddress = '';
   newContact = '';
 
-  // Active / Viewed Client Detail Modal
-  selectedClient = signal<Client | null>(null);
+  // ── Client Info Popup (ⓘ button) ──────────────────────────────────
+  infoClient = signal<Client | null>(null);
 
-  // Deletion confirm
+  // ── Client Data View (card click → full data view) ─────────────────
+  activeClient = signal<Client | null>(null);
+  clientData = signal<ClientDataEntry[]>([]);
+  dataLoading = signal(false);
+  dataError = signal('');
+
+  // ── Add Data Entry Modal ───────────────────────────────────────────
+  showAddDataModal = signal(false);
+  addDataLoading = signal(false);
+  addDataError = signal('');
+  newEntryNumber: number | null = null;
+  newEntryJwelleryValue: number | null = null;
+  newEntryDescription = '';
+
+  // ── Complete Data Entry Modal ──────────────────────────────────────
+  completingEntry = signal<ClientDataEntry | null>(null);
+  completeFinalValue: number | null = null;
+  completeLoading = signal(false);
+  completeError = signal('');
+
+  // ── Edit Data Entry Modal ──────────────────────────────────────────
+  editingEntry = signal<ClientDataEntry | null>(null);
+  editEntryNumber: number | null = null;
+  editEntryJwelleryValue: number | null = null;
+  editEntryDescription = '';
+  editEntryFinalValue: number | null = null;
+  editDataLoading = signal(false);
+  editDataError = signal('');
+
+  // ── Deletion confirm (client card) ────────────────────────────────
   deletingId = signal<number | null>(null);
 
   constructor(
@@ -81,8 +119,7 @@ export class DashboardComponent implements OnInit {
 
   getInitial(name: string): string {
     if (!name) return '?';
-    const trimmed = name.trim();
-    return trimmed.charAt(0).toUpperCase();
+    return name.trim().charAt(0).toUpperCase();
   }
 
   getAvatarBackground(name: string): string {
@@ -99,8 +136,7 @@ export class DashboardComponent implements OnInit {
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const idx = Math.abs(hash) % gradients.length;
-    return gradients[idx];
+    return gradients[Math.abs(hash) % gradients.length];
   }
 
   formatRelative(dateStr: string | null | undefined): string {
@@ -117,6 +153,15 @@ export class DashboardComponent implements OnInit {
     if (days < 30) return `${days}d ago`;
     return date.toLocaleDateString();
   }
+
+  formatDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // ── Add Client Modal ───────────────────────────────────────────────
 
   openAddModal(): void {
     this.newName = '';
@@ -136,7 +181,6 @@ export class DashboardComponent implements OnInit {
       this.addError.set('Client name is required.');
       return;
     }
-
     this.addLoading.set(true);
     this.addError.set('');
 
@@ -165,22 +209,210 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // ── Client Info Popup (ⓘ) ─────────────────────────────────────────
+
+  openInfoPopup(event: Event, client: Client): void {
+    event.stopPropagation();
+    this.infoClient.set(client);
+  }
+
+  closeInfoPopup(): void {
+    this.infoClient.set(null);
+  }
+
+  // ── Client Data View ───────────────────────────────────────────────
+
   onClientClick(client: Client): void {
-    // Record access on backend
+    this.activeClient.set(client);
+    this.dataError.set('');
+    this.dataLoading.set(true);
+    this.clientData.set([]);
+
+    // Record backend access
     this.api.getClient(client.id, this.username).subscribe({
-      next: (updatedClient) => {
-        this.selectedClient.set(updatedClient);
+      next: (updated) => {
+        this.activeClient.set(updated);
         this.refreshStats();
       },
-      error: () => {
-        this.selectedClient.set(client);
+      error: () => {},
+    });
+
+    this.loadClientData(client.id);
+  }
+
+  loadClientData(clientId: number): void {
+    this.api.getClientData(clientId, this.username).subscribe({
+      next: (data) => {
+        this.clientData.set(data);
+        this.dataLoading.set(false);
+      },
+      error: (err) => {
+        this.dataLoading.set(false);
+        this.dataError.set(err.error?.detail ?? 'Failed to load data entries.');
       },
     });
   }
 
-  closeDetailModal(): void {
-    this.selectedClient.set(null);
+  closeDataView(): void {
+    this.activeClient.set(null);
+    this.clientData.set([]);
+    this.dataError.set('');
   }
+
+  // ── Add Data Entry (Only number, jewellery_value, description) ──────
+
+  openAddDataModal(): void {
+    this.newEntryNumber = null;
+    this.newEntryJwelleryValue = null;
+    this.newEntryDescription = '';
+    this.addDataError.set('');
+    this.showAddDataModal.set(true);
+  }
+
+  closeAddDataModal(): void {
+    this.showAddDataModal.set(false);
+  }
+
+  submitAddDataEntry(): void {
+    if (this.newEntryNumber === null || this.newEntryJwelleryValue === null || !this.newEntryDescription.trim()) {
+      this.addDataError.set('Number, jewellery value, and description are required.');
+      return;
+    }
+
+    const client = this.activeClient();
+    if (!client) return;
+
+    this.addDataLoading.set(true);
+    this.addDataError.set('');
+
+    const payload: ClientDataCreate = {
+      number: this.newEntryNumber,
+      jwellery_value: this.newEntryJwelleryValue,
+      description: this.newEntryDescription.trim(),
+    };
+
+    this.api.createClientData(client.id, payload, this.username).subscribe({
+      next: () => {
+        this.addDataLoading.set(false);
+        this.closeAddDataModal();
+        this.loadClientData(client.id);
+      },
+      error: (err) => {
+        this.addDataLoading.set(false);
+        this.addDataError.set(err.error?.detail ?? 'Failed to create entry.');
+      },
+    });
+  }
+
+  // ── Complete Data Entry (Final Value input + calls complete/update API) ──
+
+  openCompleteModal(event: Event, entry: ClientDataEntry): void {
+    event.stopPropagation();
+    this.completingEntry.set(entry);
+    this.completeFinalValue = entry.final_value ?? null;
+    this.completeError.set('');
+  }
+
+  closeCompleteModal(): void {
+    this.completingEntry.set(null);
+  }
+
+  submitCompleteEntry(): void {
+    const entry = this.completingEntry();
+    const client = this.activeClient();
+    if (!entry || !client) return;
+
+    if (this.completeFinalValue === null || isNaN(this.completeFinalValue)) {
+      this.completeError.set('Final value is required to complete the entry.');
+      return;
+    }
+
+    this.completeLoading.set(true);
+    this.completeError.set('');
+
+    const payload: ClientDataUpdate = {
+      final_value: Number(this.completeFinalValue),
+    };
+
+    this.api.updateClientData(client.id, entry.id, payload, this.username).subscribe({
+      next: () => {
+        this.completeLoading.set(false);
+        this.closeCompleteModal();
+        this.loadClientData(client.id);
+      },
+      error: (err) => {
+        this.completeLoading.set(false);
+        this.completeError.set(err.error?.detail ?? 'Failed to complete data entry.');
+      },
+    });
+  }
+
+  // ── Edit Data Entry (Row Click) ────────────────────────────────────
+
+  openRowEditModal(entry: ClientDataEntry): void {
+    this.editingEntry.set(entry);
+    this.editEntryNumber = entry.number;
+    this.editEntryJwelleryValue = entry.jwellery_value;
+    this.editEntryDescription = entry.description;
+    this.editEntryFinalValue = entry.final_value;
+    this.editDataError.set('');
+  }
+
+  closeEditModal(): void {
+    this.editingEntry.set(null);
+  }
+
+  submitEditEntry(): void {
+    const entry = this.editingEntry();
+    const client = this.activeClient();
+    if (!entry || !client) return;
+
+    if (this.editEntryNumber === null || this.editEntryJwelleryValue === null || !this.editEntryDescription.trim()) {
+      this.editDataError.set('Number, jewellery value, and description are required.');
+      return;
+    }
+
+    this.editDataLoading.set(true);
+    this.editDataError.set('');
+
+    const payload: ClientDataUpdate = {
+      number: this.editEntryNumber,
+      jwellery_value: this.editEntryJwelleryValue,
+      description: this.editEntryDescription.trim(),
+      ...(entry.date_completed ? { final_value: this.editEntryFinalValue ?? undefined } : {}),
+    };
+
+    this.api.updateClientData(client.id, entry.id, payload, this.username).subscribe({
+      next: () => {
+        this.editDataLoading.set(false);
+        this.closeEditModal();
+        this.loadClientData(client.id);
+      },
+      error: (err) => {
+        this.editDataLoading.set(false);
+        this.editDataError.set(err.error?.detail ?? 'Failed to update entry.');
+      },
+    });
+  }
+
+  // ── Delete Data Row ────────────────────────────────────────────────
+
+  deleteDataEntry(event: Event, entryId: number): void {
+    event.stopPropagation();
+    const client = this.activeClient();
+    if (!client) return;
+
+    this.api.deleteClientData(client.id, entryId, this.username).subscribe({
+      next: () => {
+        this.clientData.update((list) => list.filter((e) => e.id !== entryId));
+      },
+      error: (err) => {
+        this.dataError.set(err.error?.detail ?? 'Failed to delete data entry.');
+      },
+    });
+  }
+
+  // ── Delete Client ──────────────────────────────────────────────────
 
   confirmDelete(event: Event, id: number): void {
     event.stopPropagation();
