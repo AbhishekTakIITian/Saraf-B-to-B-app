@@ -313,6 +313,8 @@ def update_client_data_entry_db(
             existing["jwellery_value"] = body.jwellery_value
         if body.description is not None:
             existing["description"] = body.description
+        if body.date_created is not None:
+            existing["date_created"] = body.date_created.isoformat()
         if body.final_value is not None:
             existing["final_value"] = body.final_value
             if not existing.get("date_completed"):

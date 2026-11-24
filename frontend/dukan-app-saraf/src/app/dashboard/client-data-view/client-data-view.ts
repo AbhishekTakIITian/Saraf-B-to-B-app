@@ -50,6 +50,7 @@ export class ClientDataViewComponent implements OnInit {
   editEntryNumber: number | null = null;
   editEntryJwelleryValue: number | null = null;
   editEntryDescription = '';
+  editEntryDateCreated = '';
   editEntryFinalValue: number | null = null;
   editDataLoading = signal(false);
   editDataError = signal('');
@@ -200,6 +201,7 @@ export class ClientDataViewComponent implements OnInit {
     this.editEntryNumber = entry.number;
     this.editEntryJwelleryValue = entry.jwellery_value;
     this.editEntryDescription = entry.description;
+    this.editEntryDateCreated = this.toDateTimeLocal(entry.date_created);
     this.editEntryFinalValue = entry.final_value;
     this.editDataError.set('');
   }
@@ -217,6 +219,17 @@ export class ClientDataViewComponent implements OnInit {
       return;
     }
 
+    const dateCreated = this.fromDateTimeLocal(this.editEntryDateCreated);
+    if (this.editEntryDateCreated && !dateCreated) {
+      this.editDataError.set('Date created is invalid.');
+      return;
+    }
+
+    if (entry.date_completed && (this.editEntryFinalValue === null || isNaN(this.editEntryFinalValue))) {
+      this.editDataError.set('Final value is required for a completed entry.');
+      return;
+    }
+
     this.editDataLoading.set(true);
     this.editDataError.set('');
 
@@ -224,7 +237,8 @@ export class ClientDataViewComponent implements OnInit {
       number: this.editEntryNumber,
       jwellery_value: this.editEntryJwelleryValue,
       description: this.editEntryDescription.trim(),
-      ...(entry.date_completed ? { final_value: this.editEntryFinalValue ?? undefined } : {}),
+      ...(dateCreated ? { date_created: dateCreated } : {}),
+      ...(entry.date_completed ? { final_value: Number(this.editEntryFinalValue) } : {}),
     };
 
     this.api.updateClientData(this.client.id, entry.id, payload, this.username).subscribe({
@@ -255,6 +269,22 @@ export class ClientDataViewComponent implements OnInit {
   }
 
   // ── Formatters ─────────────────────────────────────────────────────
+
+  private toDateTimeLocal(iso: string | null | undefined): string {
+    if (!iso) return '';
+    const date = new Date(iso);
+    if (isNaN(date.getTime())) return '';
+    const pad = (value: number): string => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
+
+  private fromDateTimeLocal(value: string): string | undefined {
+    if (!value) return undefined;
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return undefined;
+    const pad = (num: number): string => String(num).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+  }
 
   getInitial(name: string): string {
     if (!name) return '?';

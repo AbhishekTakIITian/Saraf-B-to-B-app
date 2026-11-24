@@ -67,6 +67,7 @@ class UpdateDataEntryPayload(BaseModel):
     jwellery_value: Optional[float] = None
     description: Optional[str] = None
     final_value: Optional[float] = None
+    date_created: Optional[datetime] = None
 
 
 class CompleteDataEntryPayload(BaseModel):

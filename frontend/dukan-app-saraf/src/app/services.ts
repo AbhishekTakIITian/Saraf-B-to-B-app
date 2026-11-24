@@ -75,6 +75,7 @@ export interface ClientDataUpdate {
   jwellery_value?: number;
   description?: string;
   final_value?: number;
+  date_created?: string;
 }
 
 export interface CompleteDataEntry {

@@ -77,8 +77,8 @@
                   <span class="sort-dir-badge">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                 }
               </th>
-              <th class="th-sortable" (click)="setSort('jwellery_value')" title="Sort by Jewellery Value">
-                <span>Jewellery Value</span>
+              <th class="th-sortable" (click)="setSort('jwellery_value')" title="Sort by Borrowed Value">
+                <span>Borrowed Value</span>
                 @if (sortBy === 'jwellery_value') {
                   <span class="sort-dir-badge">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                 }
@@ -108,7 +108,7 @@
                 }
               </th>
               <th class="th-sortable" (click)="setSort('final_value')" title="Sort by Final Value">
-                <span>Final Value</span>
+                <span>Paid Value</span>
                 @if (sortBy === 'final_value') {
                   <span class="sort-dir-badge">{{ sortOrder === 'asc' ? '▲' : '▼' }}</span>
                 }
@@ -290,10 +290,15 @@
           <input type="text" class="field-input no-icon" [(ngModel)]="editEntryDescription" name="editDesc" required />
         </div>
 
+        <div class="field">
+          <label class="field-label">Date Created</label>
+          <input type="datetime-local" step="1" class="field-input no-icon" [(ngModel)]="editEntryDateCreated" name="editDateCreated" />
+        </div>
+
         @if (editingEntry()!.date_completed) {
           <div class="field">
-            <label class="field-label">Final Value (₹)</label>
-            <input type="number" step="0.01" class="field-input no-icon" [(ngModel)]="editEntryFinalValue" name="editFinalVal" />
+            <label class="field-label">Final Value (₹) *</label>
+            <input type="number" step="0.01" class="field-input no-icon" [(ngModel)]="editEntryFinalValue" name="editFinalVal" required />
           </div>
         }
 
