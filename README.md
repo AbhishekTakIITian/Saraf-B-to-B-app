@@ -264,12 +264,13 @@ npm run build dukan-app-saraf -- --base-href ./
 .\.venv\Scripts\python.exe launcher.pyw
 ```
 
-## Pyinstaller script to build app 
+## Pyinstaller script to build app
 
-``` shell
-pyinstaller --noconsole --onefile `
-  --name "DukanApp" `
-  --add-data "backend;backend" `
+```powershell
+pyinstaller --noconsole --onedir --noconfirm `
+  --name "Saraf-Moneylending-App" `
+  --icon "frontend\dukan-app-saraf\public\favicon.ico" `
+  --add-data "backend;system" `
   --add-data "frontend/dukan-app-saraf/dist/dukan-app-saraf/browser;dist" `
   --hidden-import "uvicorn.logging" `
   --hidden-import "uvicorn.loops" `
@@ -283,5 +284,12 @@ pyinstaller --noconsole --onefile `
   --hidden-import "uvicorn.lifespans.on" `
   --hidden-import "uvicorn.lifespans.off" `
   --hidden-import "psycopg2" `
+  --hidden-import "dotenv" `
+  --collect-all "fastapi" `
+  --collect-all "starlette" `
+  --collect-all "pydantic" `
+  --collect-all "pydantic_core" `
+  --collect-all "uvicorn" `
+  --collect-all "anyio" `
   launcher.pyw
 ```

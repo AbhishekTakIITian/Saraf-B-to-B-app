@@ -218,8 +218,7 @@ class Database:
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS client_data (
                         id               SERIAL PRIMARY KEY,
-                        client_id        INT NOT NULL
-                                         REFERENCES clients(id) ON DELETE CASCADE,
+                        client_id        INT NOT NULL,
                         data             JSONB NOT NULL,
                         created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     )
@@ -237,15 +236,16 @@ class Database:
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS deleted_clients (
                         id               SERIAL PRIMARY KEY,
-                        client_id        INT NOT NULL
+                        client_id        INT NOT NULL UNIQUE,
                         owner_username   VARCHAR(100) NOT NULL
                                          REFERENCES login(username) ON DELETE CASCADE,
                         name             VARCHAR(200) NOT NULL,
                         address          TEXT,
                         contact_number   VARCHAR(30),
-                        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                        last_edited_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                        last_accessed_at TIMESTAMPTZ
+                        created_at       TIMESTAMPTZ NOT NULL,
+                        last_edited_at   TIMESTAMPTZ NOT NULL,
+                        last_accessed_at TIMESTAMPTZ,
+                        deleted_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     )
                 """)
                 logger.info("[DB] Table 'deleted_clients' is ready.")
@@ -261,10 +261,10 @@ class Database:
                 cur.execute("""
                     CREATE TABLE IF NOT EXISTS deleted_client_data (
                         id               SERIAL PRIMARY KEY,
-                        client_id        INT NOT NULL
-                                         REFERENCES deleted_clients(client_id) ON DELETE CASCADE,
+                        client_id        INT NOT NULL,
                         data             JSONB NOT NULL,
-                        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                        created_at       TIMESTAMPTZ NOT NULL,
+                        deleted_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     )
                 """)
                 logger.info("[DB] Table 'deleted_client_data' is ready.")
@@ -280,6 +280,8 @@ class Database:
         self._seed_admin()
         self._ensure_clients_table()
         self._ensure_client_data_table()
+        self._ensure_deleted_clients_table()
+        self._ensure_deleted_client_data_table()
         logger.info("[DB] Bootstrap complete. %r", self)
 
     # ------------------------------------------------------------------

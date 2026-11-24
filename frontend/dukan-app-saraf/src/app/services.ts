@@ -83,10 +83,23 @@ export interface CompleteDataEntry {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  /** Base URL of the FastAPI backend — override via environment file for prod */
-  private readonly baseUrl = 'http://localhost:8000';
+  /** Base URL of the FastAPI backend — same-origin when served by backend, localhost in ng dev */
+  private readonly baseUrl = this.resolveBaseUrl();
 
   constructor(private http: HttpClient) {}
+
+  private resolveBaseUrl(): string {
+    if (typeof window !== 'undefined' && window.location) {
+      const { protocol, hostname, port } = window.location;
+      if (port === '4200') {
+        return 'http://localhost:8000';
+      }
+      if ((protocol === 'http:' || protocol === 'https:') && hostname) {
+        return window.location.origin;
+      }
+    }
+    return 'http://localhost:8000';
+  }
 
   /**
    * POST /login

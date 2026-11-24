@@ -5,3 +5,5 @@ DukanApp.spec
 build/
 dist/
 build.zip
+/*.spec
+launcher.log

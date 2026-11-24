@@ -1,11 +1,14 @@
 """
 db_utils.py — Database utility functions for managing clients.
 """
+import asyncio
 import json
+import logging
 
 from fastapi import HTTPException
 
 from common.constants import ROW_COLS
+from common.db import db_instance
 from common.models import (
     ClientCreate,
     ClientOut,
@@ -17,6 +20,8 @@ from common.models import (
     UpdateDataEntryPayload,
 )
 from utils.utils import get_current_timestamp
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -154,11 +159,43 @@ def delete_client_db(client_id: int, username: str, conn) -> dict[str, str]:
     """Delete a client by ID for a given username."""
     with conn.cursor() as cur:
         cur.execute(
+            "SELECT * FROM clients WHERE id = %s AND owner_username = %s",
+            (client_id, username),
+        )
+        row = cur.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Client not found.")
+
+        # Archive client first
+        cur.execute(
+            """
+            INSERT INTO deleted_clients
+            (client_id, owner_username, name, address,
+             contact_number, created_at, last_edited_at, last_accessed_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7]),
+        )
+
+        # Archive related client_data before deleting source rows
+        cur.execute(
+            "SELECT * FROM client_data WHERE client_id = %s",
+            (client_id,),
+        )
+        rows = cur.fetchall()
+        for data_row in rows:
+            cur.execute(
+                """
+                INSERT INTO deleted_client_data
+                (client_id, data, created_at)
+                VALUES (%s, %s, %s)
+                """,
+                (data_row[1], data_row[2], data_row[3]),
+            )
+        cur.execute(
             "DELETE FROM clients WHERE id = %s AND owner_username = %s",
             (client_id, username),
         )
-        if cur.rowcount == 0:
-            raise HTTPException(status_code=404, detail="Client not found.")
     conn.commit()
     return {"message": "Client deleted successfully."}
 
@@ -274,7 +311,7 @@ def delete_client_data_entry_db(
     username: str,
     conn,
 ) -> dict[str, str]:
-    """Delete a data entry for a specific client."""
+    """Archive and delete a data entry for a specific client."""
     with conn.cursor() as cur:
         cur.execute(
             "SELECT id FROM clients WHERE id = %s AND owner_username = %s",
@@ -282,6 +319,26 @@ def delete_client_data_entry_db(
         )
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Client not found.")
+
+        cur.execute(
+            """
+            SELECT id, client_id, data, created_at
+            FROM client_data
+            WHERE id = %s AND client_id = %s
+            """,
+            (entry_id, client_id),
+        )
+        row = cur.fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Data entry not found.")
+
+        cur.execute(
+            """
+            INSERT INTO deleted_client_data (client_id, data, created_at)
+            VALUES (%s, %s, %s)
+            """,
+            (row[1], row[2], row[3]),
+        )
 
         cur.execute(
             "DELETE FROM client_data WHERE id = %s AND client_id = %s",
@@ -330,3 +387,43 @@ def get_client_data_db(
             )
         )
     return data_entries
+
+
+async def cleanup_completed_data_entries_after_3_days() -> int:
+    """Delete completed client data entries whose completion is older than 3 days.
+
+    A data entry is considered completed when `data.date_completed` is present and
+    parses to a timestamp more than 3 days in the past. Runs once on app startup.
+    """
+    def _cleanup() -> int:
+        conn = db_instance._app_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    DELETE FROM client_data
+                    WHERE NULLIF(BTRIM(data->>'date_completed'), '') IS NOT NULL
+                      AND (data->>'date_completed')::timestamptz < (NOW() - INTERVAL '3 days')
+                    """
+                )
+                deleted = cur.rowcount or 0
+            conn.commit()
+            return deleted
+        except Exception:
+            conn.rollback()
+            logger.exception(
+                "[DB] Failed to clean up completed client data entries older than 3 days."
+            )
+            raise
+        finally:
+            conn.close()
+
+    deleted_count = await asyncio.to_thread(_cleanup)
+    if deleted_count:
+        logger.info(
+            "[DB] Deleted %s completed client data entries older than 3 days.",
+            deleted_count,
+        )
+    else:
+        logger.info("[DB] No completed client data entries older than 3 days to delete.")
+    return deleted_count

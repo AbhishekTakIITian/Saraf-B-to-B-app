@@ -6,22 +6,66 @@ import logging
 import mimetypes
 import os
 import sys
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
 
 from routers import clients, login
+from utils.db_utils import cleanup_completed_data_entries_after_3_days
 
 # Ensure Windows registry doesn't cause .js files to be served as text/plain
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
 mimetypes.add_type("image/x-icon", ".ico")
 
-logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="Dukan App B-To-B API")
+def _runtime_log_dir() -> Path:
+    """Return the directory where runtime log files should be written."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    # backend/api.py -> project root
+    return Path(__file__).resolve().parent.parent
 
+
+def _configure_backend_logging() -> None:
+    """Configure backend logging to write all backend logs to logger.txt."""
+    log_path = _runtime_log_dir() / "logger.txt"
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+
+    if not any(
+        isinstance(handler, logging.FileHandler)
+        and Path(getattr(handler, "baseFilename", "")) == log_path
+        for handler in root_logger.handlers
+    ):
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_path, encoding="utf-8")
+        file_handler.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s [%(name)s] %(message)s")
+        )
+        root_logger.addHandler(file_handler)
+
+
+_configure_backend_logging()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI): #pylint: disable=unused-argument redefined-outer-name
+    """Lifespan context manager for FastAPI app."""
+    # Startup tasks
+    try:
+        await cleanup_completed_data_entries_after_3_days()
+    except Exception: #pylint: disable=broad-except
+        logging.exception(
+            "[Startup] Completed data entry cleanup failed; continuing app startup."
+        )
+    yield
+    # Shutdown tasks (if any) can be added here
+
+app = FastAPI(title="Dukan App B-To-B API", lifespan=lifespan)
 # ── CORS ────────────────────────────────────────────────────────────────────
 # Allow Angular dev server (port 4200) as well as the local backend origin (port 8000).
 app.add_middleware(
