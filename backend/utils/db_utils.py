@@ -464,7 +464,7 @@ async def cleanup_completed_data_entries_after_3_days() -> int:
                     """
                     DELETE FROM client_data
                     WHERE NULLIF(BTRIM(data->>'date_completed'), '') IS NOT NULL
-                      AND (data->>'date_completed')::timestamptz < (NOW() - INTERVAL '3 days')
+                      AND (data->>'date_completed')::timestamptz < (NOW() - INTERVAL '30 days')
                     """
                 )
                 deleted = cur.rowcount or 0
