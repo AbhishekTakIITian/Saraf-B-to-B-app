@@ -76,6 +76,12 @@
   padding-top: 0.25rem;
 }
 
+.header-theme-toggle {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
 .btn-back {
   position: absolute;
   left: 0;
@@ -367,11 +373,83 @@
 
 /* ─── Eye icon ───────────────────────────────────────────────────── */
 .eye-icon {
-    width: 1.1rem;
-    height: 1.1rem;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.8;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ─── Light mode overrides ──────────────────────────────────────── */
+:host-context([data-theme='light']) {
+  .page {
+    &::before {
+      background: radial-gradient(circle, rgba(236, 72, 153, 0.14) 0%, transparent 70%);
+    }
+    &::after {
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.16) 0%, transparent 70%);
+    }
   }
+
+  .card {
+    background: rgba(255, 255, 255, 0.84);
+    border-color: rgba(15, 23, 42, 0.1);
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(124, 58, 237, 0.06);
+  }
+
+  .btn-back {
+    background: rgba(15, 23, 42, 0.04);
+    border-color: rgba(15, 23, 42, 0.12);
+    color: var(--purple-dark);
+
+    &:hover {
+      background: rgba(124, 58, 237, 0.08);
+      color: var(--purple-dark);
+    }
+  }
+
+  .page-title {
+    background: linear-gradient(135deg, #1e293b 0%, var(--purple-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .field-input {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(15, 23, 42, 0.14);
+    color: var(--text);
+
+    &::placeholder {
+      color: rgba(51, 65, 85, 0.45);
+    }
+
+    &:focus {
+      background: #fff;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+    }
+  }
+
+  .input-icon,
+  .pwd-toggle {
+    color: #334155;
+  }
+
+  .role-option {
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(15, 23, 42, 0.12);
+
+    &.active {
+      background: rgba(124, 58, 237, 0.08);
+      border-color: rgba(124, 58, 237, 0.45);
+    }
+
+    &:hover:not(.active) {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(15, 23, 42, 0.18);
+    }
+  }
+}

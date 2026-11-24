@@ -1,0 +1,40 @@
+<div class="modal-backdrop" (click)="onClose()">
+  <div class="modal-card detail-card" (click)="$event.stopPropagation()">
+
+    <div class="detail-header">
+      <div class="client-avatar-lg" [style.background]="getAvatarBackground(client.name)">
+        {{ getInitial(client.name) }}
+      </div>
+      <h3 class="detail-name">{{ client.name }}</h3>
+      <span class="detail-owner">Managed by {{ client.owner_username }}</span>
+    </div>
+
+    <div class="detail-body">
+      <div class="detail-field">
+        <span class="detail-field-label">Address</span>
+        <span class="detail-field-value">{{ client.address || 'None' }}</span>
+      </div>
+      <div class="detail-field">
+        <span class="detail-field-label">Contact Number</span>
+        <span class="detail-field-value">{{ client.contact_number || 'None' }}</span>
+      </div>
+      <div class="detail-field">
+        <span class="detail-field-label">Last Edited</span>
+        <span class="detail-field-value">{{ formatRelative(client.last_edited_at) }}</span>
+      </div>
+      <div class="detail-field">
+        <span class="detail-field-label">Last Accessed</span>
+        <span class="detail-field-value">{{ formatRelative(client.last_accessed_at) }}</span>
+      </div>
+      <div class="detail-field">
+        <span class="detail-field-label">Created At</span>
+        <span class="detail-field-value">{{ formatDate(client.created_at) }}</span>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-primary full-width" (click)="onClose()">Close</button>
+    </div>
+
+  </div>
+</div>

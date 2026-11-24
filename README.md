@@ -251,3 +251,37 @@ Then open **http://localhost:4200** in your browser.
 | Backend | FastAPI 0.165 + Uvicorn |
 | Database | PostgreSQL 14+ via psycopg2 |
 | Auth | SHA-256 + random salt (upgrade to bcrypt/JWT for production) |
+
+## Build frontend 
+
+``` shell
+cd frontend/dukan-app-saraf
+npm run build dukan-app-saraf -- --base-href ./
+```
+
+## To launch app view in dev
+```bash
+.\.venv\Scripts\python.exe launcher.pyw
+```
+
+## Pyinstaller script to build app 
+
+``` shell
+pyinstaller --noconsole --onefile `
+  --name "DukanApp" `
+  --add-data "backend;backend" `
+  --add-data "frontend/dukan-app-saraf/dist/dukan-app-saraf/browser;dist" `
+  --hidden-import "uvicorn.logging" `
+  --hidden-import "uvicorn.loops" `
+  --hidden-import "uvicorn.loops.auto" `
+  --hidden-import "uvicorn.protocols" `
+  --hidden-import "uvicorn.protocols.http" `
+  --hidden-import "uvicorn.protocols.http.auto" `
+  --hidden-import "uvicorn.protocols.websockets" `
+  --hidden-import "uvicorn.protocols.websockets.auto" `
+  --hidden-import "uvicorn.lifespans" `
+  --hidden-import "uvicorn.lifespans.on" `
+  --hidden-import "uvicorn.lifespans.off" `
+  --hidden-import "psycopg2" `
+  launcher.pyw
+```

@@ -1,0 +1,257 @@
+<div class="data-view-overlay">
+
+  <!-- Data View Header -->
+  <div class="data-view-header">
+    <div class="data-view-header-left">
+      <button type="button" class="btn-back" (click)="onBack()" title="Back to Clients">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg>
+        Back
+      </button>
+      <div class="data-view-title-group">
+        <div class="data-view-avatar" [style.background]="getAvatarBackground(client.name)">
+          {{ getInitial(client.name) }}
+        </div>
+        <div>
+          <h2 class="data-view-name">{{ client.name }}</h2>
+          <span class="data-view-sub">{{ clientData().length }} entries</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="data-view-header-actions">
+      <app-theme-toggle></app-theme-toggle>
+      <button type="button" class="btn-add-client" (click)="openAddDataModal()">
+        <span class="plus-sign"><svg class="btn-icon-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z"/></svg></span>
+        Add Entry
+      </button>
+    </div>
+  </div>
+
+  <!-- Data View Body -->
+  <div class="data-view-body">
+
+    @if (dataError()) {
+      <div class="alert alert-error"><span>{{ dataError() }}</span></div>
+    }
+
+    @if (dataLoading()) {
+      <div class="data-loading">
+        <span class="spinner"></span> Loading entries…
+      </div>
+    }
+
+    @if (!dataLoading() && clientData().length === 0 && !dataError()) {
+      <div class="data-empty">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true"><path d="M64 480H448c35.3 0 64-28.7 64-64V160c0-35.3-28.7-64-64-64H288c-10.1 0-19.6-4.7-25.6-12.8L243.2 57.6C231.1 41.5 212.1 32 192 32H64C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64z"/></svg>
+        <p>No data entries yet. Click <strong>Add Entry</strong> to create one.</p>
+      </div>
+    }
+
+    @if (!dataLoading() && clientData().length > 0) {
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>No.</th>
+              <th>Jewellery Value</th>
+              <th>Description</th>
+              <th>Created</th>
+              <th>Updated</th>
+              <th>Completed</th>
+              <th>Final Value</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of clientData(); track entry.id; let i = $index) {
+              <tr class="data-row" (click)="openRowEditModal(entry)" title="Click to edit">
+                <td class="td-idx">{{ i + 1 }}</td>
+                <td class="td-num">{{ entry.number }}</td>
+                <td class="td-val">₹{{ entry.jwellery_value | number:'1.0-2' }}</td>
+                <td class="td-desc" [title]="entry.description">{{ entry.description }}</td>
+                <td class="td-date">{{ formatDate(entry.date_created) }}</td>
+                <td class="td-date">{{ formatDate(entry.date_updated) }}</td>
+                <td class="td-date">
+                  @if (entry.date_completed) {
+                    <span class="badge-completed">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true"><path d="M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM369 209L241 337c-9.4 9.4-24.6 9.4-33.9 0l-64-64c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0l47 47L335 175c9.4-9.4 24.6-9.4 33.9 0s9.4 24.6 0 33.9z"/></svg>
+                      {{ formatDate(entry.date_completed) }}
+                    </span>
+                  } @else {
+                    <span class="badge-pending">Pending</span>
+                  }
+                </td>
+                <td class="td-final">
+                  @if (entry.final_value !== null) {
+                    ₹{{ entry.final_value | number:'1.0-2' }}
+                  } @else { — }
+                </td>
+                <td class="td-actions" (click)="$event.stopPropagation()">
+                  @if (!entry.date_completed) {
+                    <button
+                      type="button"
+                      class="btn-row-complete"
+                      (click)="openCompleteModal($event, entry)"
+                      title="Complete Entry"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z"/></svg>
+                      <span>Complete</span>
+                    </button>
+                  }
+                  <button type="button" class="btn-row-edit" (click)="openRowEditModal(entry)" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" aria-hidden="true"><path d="M362.7 19.3L314.3 67.7 444.3 197.7l48.4-48.4c25-25 25-65.5 0-90.5L453.3 19.3c-25-25-65.5-25-90.5 0zm-71 71L58.6 323.5c-10.4 10.4-18 23.3-22.2 37.4L1 481.2C-1.5 489.7 .8 498.8 7 505s15.3 8.5 23.7 6.1l120.3-35.4c14.1-4.2 27-11.8 37.4-22.2L421.7 220.3 291.7 90.3z"/></svg>
+                  </button>
+                  <button type="button" class="btn-row-delete" (click)="deleteDataEntry($event, entry.id)" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" aria-hidden="true"><path d="M135.2 17.7C140.6 6.8 151.7 0 163.8 0L284.2 0c12.1 0 23.2 6.8 28.6 17.7L320 32l96 0c17.7 0 32 14.3 32 32s-14.3 32-32 32L32 96C14.3 96 0 81.7 0 64S14.3 32 32 32l96 0 7.2-14.3zM32 128l384 0 0 320c0 35.3-28.7 64-64 64L96 512c-35.3 0-64-28.7-64-64l0-320zm96 64c-8.8 0-16 7.2-16 16l0 224c0 8.8 7.2 16 16 16s16-7.2 16-16l0-224c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16l0 224c0 8.8 7.2 16 16 16s16-7.2 16-16l0-224c0-8.8-7.2-16-16-16zm96 0c-8.8 0-16 7.2-16 16l0 224c0 8.8 7.2 16 16 16s16-7.2 16-16l0-224c0-8.8-7.2-16-16-16z"/></svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     Add Data Entry Modal
+     ══════════════════════════════════════════════════════════════════ -->
+@if (showAddDataModal()) {
+  <div class="modal-backdrop" (click)="closeAddDataModal()">
+    <div class="modal-card data-modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3 class="modal-title">New Data Entry</h3>
+        <p class="modal-subtitle">Add a jewellery data record for {{ client.name }}</p>
+      </div>
+
+      @if (addDataError()) {
+        <div class="alert alert-error"><span>{{ addDataError() }}</span></div>
+      }
+
+      <form class="modal-form" (ngSubmit)="submitAddDataEntry()" novalidate>
+        <div class="fields-row">
+          <div class="field">
+            <label class="field-label">Number *</label>
+            <input type="number" class="field-input no-icon" placeholder="e.g. 1001" [(ngModel)]="newEntryNumber" name="entryNumber" required />
+          </div>
+          <div class="field">
+            <label class="field-label">Jewellery Value (₹) *</label>
+            <input type="number" step="0.01" class="field-input no-icon" placeholder="e.g. 25000.00" [(ngModel)]="newEntryJwelleryValue" name="entryJVal" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Description</label>
+          <input type="text" class="field-input no-icon" placeholder="e.g. Gold necklace repair" [(ngModel)]="newEntryDescription" name="entryDesc" required />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" (click)="closeAddDataModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="addDataLoading()">
+            @if (addDataLoading()) { <span class="spinner"></span> Saving... } @else { Save Entry }
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════
+     Complete Data Entry Modal
+     ══════════════════════════════════════════════════════════════════ -->
+@if (completingEntry()) {
+  <div class="modal-backdrop" (click)="closeCompleteModal()">
+    <div class="modal-card data-modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3 class="modal-title">Complete Entry #{{ completingEntry()!.number }}</h3>
+        <p class="modal-subtitle">Enter the final value to complete this entry for {{ client.name }}</p>
+      </div>
+
+      @if (completeError()) {
+        <div class="alert alert-error"><span>{{ completeError() }}</span></div>
+      }
+
+      <form class="modal-form" (ngSubmit)="submitCompleteEntry()" novalidate>
+        <div class="field">
+          <label class="field-label">Final Value (₹) *</label>
+          <input
+            type="number"
+            step="0.01"
+            class="field-input no-icon"
+            placeholder="e.g. 26500.00"
+            [(ngModel)]="completeFinalValue"
+            name="finalVal"
+            required
+            autofocus
+          />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" (click)="closeCompleteModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="completeLoading()">
+            @if (completeLoading()) { <span class="spinner"></span> Completing... } @else { Complete Entry }
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+}
+
+<!-- ══════════════════════════════════════════════════════════════════
+     Edit Data Entry Modal
+     ══════════════════════════════════════════════════════════════════ -->
+@if (editingEntry()) {
+  <div class="modal-backdrop" (click)="closeEditModal()">
+    <div class="modal-card data-modal-card" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <h3 class="modal-title">Edit Entry #{{ editingEntry()!.number }}</h3>
+        <p class="modal-subtitle">Update jewellery record for {{ client.name }}</p>
+      </div>
+
+      @if (editDataError()) {
+        <div class="alert alert-error"><span>{{ editDataError() }}</span></div>
+      }
+
+      <form class="modal-form" (ngSubmit)="submitEditEntry()" novalidate>
+        <div class="fields-row">
+          <div class="field">
+            <label class="field-label">Number *</label>
+            <input type="number" class="field-input no-icon" [(ngModel)]="editEntryNumber" name="editNum" required />
+          </div>
+          <div class="field">
+            <label class="field-label">Jewellery Value (₹) *</label>
+            <input type="number" step="0.01" class="field-input no-icon" [(ngModel)]="editEntryJwelleryValue" name="editJVal" required />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Description *</label>
+          <input type="text" class="field-input no-icon" [(ngModel)]="editEntryDescription" name="editDesc" required />
+        </div>
+
+        @if (editingEntry()!.date_completed) {
+          <div class="field">
+            <label class="field-label">Final Value (₹)</label>
+            <input type="number" step="0.01" class="field-input no-icon" [(ngModel)]="editEntryFinalValue" name="editFinalVal" />
+          </div>
+        }
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" (click)="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn-primary" [disabled]="editDataLoading()">
+            @if (editDataLoading()) { <span class="spinner"></span> Updating... } @else { Update Entry }
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+}

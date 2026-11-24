@@ -187,6 +187,16 @@ def create_client_data_entry_db(
             "final_value": None,
         }
         cur.execute(
+            """SELECT * FROM client_data WHERE client_id = %s AND data->>'number' = %s""",
+            (client_id, str(body.number))
+        )
+        if cur.fetchone():
+            raise HTTPException(
+                status_code=400,
+                detail="Data entry with this number already exists."
+            )
+
+        cur.execute(
             """
             INSERT INTO client_data (client_id, data)
             VALUES (%s, %s)

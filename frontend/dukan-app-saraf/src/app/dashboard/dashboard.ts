@@ -7,16 +7,21 @@ import {
   Client,
   ClientStats,
   ClientCreate,
-  ClientDataEntry,
-  ClientDataCreate,
-  ClientDataUpdate,
-  CompleteDataEntry,
 } from '../services';
+import { ClientInfoModalComponent } from './client-info-modal/client-info-modal';
+import { ClientDataViewComponent } from './client-data-view/client-data-view';
+import { ThemeToggleComponent } from '../theme-toggle/theme-toggle';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ClientInfoModalComponent,
+    ClientDataViewComponent,
+    ThemeToggleComponent,
+  ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.scss',
 })
@@ -38,37 +43,9 @@ export class DashboardComponent implements OnInit {
   newAddress = '';
   newContact = '';
 
-  // ── Client Info Popup (ⓘ button) ──────────────────────────────────
+  // ── Child Component Overlays ───────────────────────────────────────
   infoClient = signal<Client | null>(null);
-
-  // ── Client Data View (card click → full data view) ─────────────────
   activeClient = signal<Client | null>(null);
-  clientData = signal<ClientDataEntry[]>([]);
-  dataLoading = signal(false);
-  dataError = signal('');
-
-  // ── Add Data Entry Modal ───────────────────────────────────────────
-  showAddDataModal = signal(false);
-  addDataLoading = signal(false);
-  addDataError = signal('');
-  newEntryNumber: number | null = null;
-  newEntryJwelleryValue: number | null = null;
-  newEntryDescription = '';
-
-  // ── Complete Data Entry Modal ──────────────────────────────────────
-  completingEntry = signal<ClientDataEntry | null>(null);
-  completeFinalValue: number | null = null;
-  completeLoading = signal(false);
-  completeError = signal('');
-
-  // ── Edit Data Entry Modal ──────────────────────────────────────────
-  editingEntry = signal<ClientDataEntry | null>(null);
-  editEntryNumber: number | null = null;
-  editEntryJwelleryValue: number | null = null;
-  editEntryDescription = '';
-  editEntryFinalValue: number | null = null;
-  editDataLoading = signal(false);
-  editDataError = signal('');
 
   // ── Deletion confirm (client card) ────────────────────────────────
   deletingId = signal<number | null>(null);
@@ -151,14 +128,37 @@ export class DashboardComponent implements OnInit {
     if (hrs < 24) return `${hrs}h ago`;
     const days = Math.floor(hrs / 24);
     if (days < 30) return `${days}d ago`;
-    return date.toLocaleDateString();
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   }
 
-  formatDate(dateStr: string | null | undefined): string {
-    if (!dateStr) return '—';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '—';
-    return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  // ── Client Info Popup Controls ─────────────────────────────────────
+
+  openInfoPopup(event: Event, client: Client): void {
+    event.stopPropagation();
+    this.infoClient.set(client);
+  }
+
+  closeInfoPopup(): void {
+    this.infoClient.set(null);
+  }
+
+  // ── Client Data View Controls ──────────────────────────────────────
+
+  onClientClick(client: Client): void {
+    this.activeClient.set(client);
+    this.api.getClient(client.id, this.username).subscribe({
+      next: (updatedClient) => {
+        this.clients.update((list) =>
+          list.map((c) => (c.id === updatedClient.id ? updatedClient : c))
+        );
+        this.refreshStats();
+      },
+      error: () => {},
+    });
+  }
+
+  closeDataView(): void {
+    this.activeClient.set(null);
   }
 
   // ── Add Client Modal ───────────────────────────────────────────────
@@ -181,233 +181,28 @@ export class DashboardComponent implements OnInit {
       this.addError.set('Client name is required.');
       return;
     }
+
     this.addLoading.set(true);
     this.addError.set('');
+    this.addSuccess.set('');
 
     const payload: ClientCreate = {
       name: this.newName.trim(),
-      address: this.newAddress.trim() || undefined,
-      contact_number: this.newContact.trim() || undefined,
+      ...(this.newAddress.trim() ? { address: this.newAddress.trim() } : {}),
+      ...(this.newContact.trim() ? { contact_number: this.newContact.trim() } : {}),
     };
 
     this.api.createClient(payload, this.username).subscribe({
       next: (created) => {
         this.addLoading.set(false);
-        this.clients.update((current) => [created, ...current]);
-        this.stats.update((s) => ({
-          total: (s?.total ?? 0) + 1,
-          last_edited: created,
-          last_accessed: s?.last_accessed ?? null,
-        }));
         this.addSuccess.set(`Client "${created.name}" created successfully!`);
+        this.clients.update((prev) => [created, ...prev]);
+        this.refreshStats();
         setTimeout(() => this.closeAddModal(), 900);
       },
       error: (err) => {
         this.addLoading.set(false);
         this.addError.set(err.error?.detail ?? 'Failed to create client.');
-      },
-    });
-  }
-
-  // ── Client Info Popup (ⓘ) ─────────────────────────────────────────
-
-  openInfoPopup(event: Event, client: Client): void {
-    event.stopPropagation();
-    this.infoClient.set(client);
-  }
-
-  closeInfoPopup(): void {
-    this.infoClient.set(null);
-  }
-
-  // ── Client Data View ───────────────────────────────────────────────
-
-  onClientClick(client: Client): void {
-    this.activeClient.set(client);
-    this.dataError.set('');
-    this.dataLoading.set(true);
-    this.clientData.set([]);
-
-    // Record backend access
-    this.api.getClient(client.id, this.username).subscribe({
-      next: (updated) => {
-        this.activeClient.set(updated);
-        this.refreshStats();
-      },
-      error: () => {},
-    });
-
-    this.loadClientData(client.id);
-  }
-
-  loadClientData(clientId: number): void {
-    this.api.getClientData(clientId, this.username).subscribe({
-      next: (data) => {
-        this.clientData.set(data);
-        this.dataLoading.set(false);
-      },
-      error: (err) => {
-        this.dataLoading.set(false);
-        this.dataError.set(err.error?.detail ?? 'Failed to load data entries.');
-      },
-    });
-  }
-
-  closeDataView(): void {
-    this.activeClient.set(null);
-    this.clientData.set([]);
-    this.dataError.set('');
-  }
-
-  // ── Add Data Entry (Only number, jewellery_value, description) ──────
-
-  openAddDataModal(): void {
-    this.newEntryNumber = null;
-    this.newEntryJwelleryValue = null;
-    this.newEntryDescription = '';
-    this.addDataError.set('');
-    this.showAddDataModal.set(true);
-  }
-
-  closeAddDataModal(): void {
-    this.showAddDataModal.set(false);
-  }
-
-  submitAddDataEntry(): void {
-    if (this.newEntryNumber === null || this.newEntryJwelleryValue === null) {
-      this.addDataError.set('Number, jewellery value, and description are required.');
-      return;
-    }
-
-    const client = this.activeClient();
-    if (!client) return;
-
-    this.addDataLoading.set(true);
-    this.addDataError.set('');
-
-    const payload: ClientDataCreate = {
-      number: this.newEntryNumber,
-      jwellery_value: this.newEntryJwelleryValue,
-      description: this.newEntryDescription.trim(),
-    };
-
-    this.api.createClientData(client.id, payload, this.username).subscribe({
-      next: () => {
-        this.addDataLoading.set(false);
-        this.closeAddDataModal();
-        this.loadClientData(client.id);
-      },
-      error: (err) => {
-        this.addDataLoading.set(false);
-        this.addDataError.set(err.error?.detail ?? 'Failed to create entry.');
-      },
-    });
-  }
-
-  // ── Complete Data Entry (Final Value input + calls complete/update API) ──
-
-  openCompleteModal(event: Event, entry: ClientDataEntry): void {
-    event.stopPropagation();
-    this.completingEntry.set(entry);
-    this.completeFinalValue = entry.final_value ?? null;
-    this.completeError.set('');
-  }
-
-  closeCompleteModal(): void {
-    this.completingEntry.set(null);
-  }
-
-  submitCompleteEntry(): void {
-    const entry = this.completingEntry();
-    const client = this.activeClient();
-    if (!entry || !client) return;
-
-    if (this.completeFinalValue === null || isNaN(this.completeFinalValue)) {
-      this.completeError.set('Final value is required to complete the entry.');
-      return;
-    }
-
-    this.completeLoading.set(true);
-    this.completeError.set('');
-
-    const payload: ClientDataUpdate = {
-      final_value: Number(this.completeFinalValue),
-    };
-
-    this.api.updateClientData(client.id, entry.id, payload, this.username).subscribe({
-      next: () => {
-        this.completeLoading.set(false);
-        this.closeCompleteModal();
-        this.loadClientData(client.id);
-      },
-      error: (err) => {
-        this.completeLoading.set(false);
-        this.completeError.set(err.error?.detail ?? 'Failed to complete data entry.');
-      },
-    });
-  }
-
-  // ── Edit Data Entry (Row Click) ────────────────────────────────────
-
-  openRowEditModal(entry: ClientDataEntry): void {
-    this.editingEntry.set(entry);
-    this.editEntryNumber = entry.number;
-    this.editEntryJwelleryValue = entry.jwellery_value;
-    this.editEntryDescription = entry.description;
-    this.editEntryFinalValue = entry.final_value;
-    this.editDataError.set('');
-  }
-
-  closeEditModal(): void {
-    this.editingEntry.set(null);
-  }
-
-  submitEditEntry(): void {
-    const entry = this.editingEntry();
-    const client = this.activeClient();
-    if (!entry || !client) return;
-
-    if (this.editEntryNumber === null || this.editEntryJwelleryValue === null || !this.editEntryDescription.trim()) {
-      this.editDataError.set('Number, jewellery value, and description are required.');
-      return;
-    }
-
-    this.editDataLoading.set(true);
-    this.editDataError.set('');
-
-    const payload: ClientDataUpdate = {
-      number: this.editEntryNumber,
-      jwellery_value: this.editEntryJwelleryValue,
-      description: this.editEntryDescription.trim(),
-      ...(entry.date_completed ? { final_value: this.editEntryFinalValue ?? undefined } : {}),
-    };
-
-    this.api.updateClientData(client.id, entry.id, payload, this.username).subscribe({
-      next: () => {
-        this.editDataLoading.set(false);
-        this.closeEditModal();
-        this.loadClientData(client.id);
-      },
-      error: (err) => {
-        this.editDataLoading.set(false);
-        this.editDataError.set(err.error?.detail ?? 'Failed to update entry.');
-      },
-    });
-  }
-
-  // ── Delete Data Row ────────────────────────────────────────────────
-
-  deleteDataEntry(event: Event, entryId: number): void {
-    event.stopPropagation();
-    const client = this.activeClient();
-    if (!client) return;
-
-    this.api.deleteClientData(client.id, entryId, this.username).subscribe({
-      next: () => {
-        this.clientData.update((list) => list.filter((e) => e.id !== entryId));
-      },
-      error: (err) => {
-        this.dataError.set(err.error?.detail ?? 'Failed to delete data entry.');
       },
     });
   }

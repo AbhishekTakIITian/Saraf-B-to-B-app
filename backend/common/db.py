@@ -229,6 +229,49 @@ class Database:
         finally:
             conn.close()
 
+    def _ensure_deleted_clients_table(self) -> None:
+        """Create the `deleted_clients` table inside the application database if absent."""
+        conn = self._app_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS deleted_clients (
+                        id               SERIAL PRIMARY KEY,
+                        client_id        INT NOT NULL
+                        owner_username   VARCHAR(100) NOT NULL
+                                         REFERENCES login(username) ON DELETE CASCADE,
+                        name             VARCHAR(200) NOT NULL,
+                        address          TEXT,
+                        contact_number   VARCHAR(30),
+                        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        last_edited_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        last_accessed_at TIMESTAMPTZ
+                    )
+                """)
+                logger.info("[DB] Table 'deleted_clients' is ready.")
+            conn.commit()
+        finally:
+            conn.close()
+
+    def _ensure_deleted_client_data_table(self) -> None:
+        """Create the `deleted_client_data` table inside the application database if absent."""
+        conn = self._app_connection()
+        try:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS deleted_client_data (
+                        id               SERIAL PRIMARY KEY,
+                        client_id        INT NOT NULL
+                                         REFERENCES deleted_clients(client_id) ON DELETE CASCADE,
+                        data             JSONB NOT NULL,
+                        created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    )
+                """)
+                logger.info("[DB] Table 'deleted_client_data' is ready.")
+            conn.commit()
+        finally:
+            conn.close()
+
     def _bootstrap(self) -> None:
         """Run all initialisation steps in order."""
         logger.info("[DB] Starting database bootstrap …")

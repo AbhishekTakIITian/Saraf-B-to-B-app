@@ -42,6 +42,13 @@
   }
 }
 
+.page-theme-toggle {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 20;
+}
+
 /* ─── Glass card ────────────────────────────────────────────────── */
 .login-card {
   position: relative;
@@ -412,4 +419,90 @@
 
   .btn-ghost   { flex: 1; }
   .btn-primary { flex: 2; }
+}
+
+/* ─── Light mode overrides ──────────────────────────────────────── */
+:host-context([data-theme='light']) {
+  .login-page {
+    &::before {
+      background: radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, transparent 70%);
+    }
+    &::after {
+      background: radial-gradient(circle, rgba(6, 182, 212, 0.14) 0%, transparent 70%);
+    }
+  }
+
+  .login-card {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(15, 23, 42, 0.1);
+    box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(124, 58, 237, 0.06);
+  }
+
+  .brand-name {
+    background: linear-gradient(135deg, #1e293b 0%, var(--purple-dark) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .field-input {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(15, 23, 42, 0.14);
+    color: var(--text);
+
+    &::placeholder {
+      color: rgba(51, 65, 85, 0.45);
+    }
+
+    &:focus {
+      background: #fff;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+    }
+  }
+
+  .input-icon {
+    opacity: 0.55;
+    color: #334155;
+  }
+
+  .btn-outline {
+    color: var(--purple-dark);
+    border-color: rgba(124, 58, 237, 0.35);
+
+    &:hover {
+      background: rgba(124, 58, 237, 0.08);
+      border-color: rgba(124, 58, 237, 0.55);
+    }
+  }
+
+  .btn-ghost {
+    background: rgba(15, 23, 42, 0.04);
+    border-color: rgba(15, 23, 42, 0.12);
+    color: var(--text-muted);
+
+    &:hover {
+      background: rgba(15, 23, 42, 0.08);
+      color: var(--text);
+    }
+  }
+
+  .divider::before,
+  .divider::after {
+    background: rgba(15, 23, 42, 0.12);
+  }
+
+  .modal-backdrop {
+    background: rgba(15, 23, 42, 0.35);
+  }
+
+  .modal-card {
+    background: rgba(255, 255, 255, 0.96);
+    border-color: rgba(124, 58, 237, 0.18);
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18), 0 0 0 1px rgba(124, 58, 237, 0.08);
+  }
+
+  .pwd-toggle {
+    color: #334155;
+  }
 }
