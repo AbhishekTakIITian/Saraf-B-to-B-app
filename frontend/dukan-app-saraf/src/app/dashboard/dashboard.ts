@@ -34,6 +34,12 @@ export class DashboardComponent implements OnInit {
   loading = signal(true);
   error = signal('');
 
+  // ── Search & Sort State ───────────────────────────────────────────
+  searchQuery = '';
+  sortBy = 'last_edited_at';
+  sortOrder: 'asc' | 'desc' = 'desc';
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
   // ── Add Client Modal ───────────────────────────────────────────────
   showAddModal = signal(false);
   addLoading = signal(false);
@@ -67,24 +73,49 @@ export class DashboardComponent implements OnInit {
   }
 
   loadAll(): void {
+    this.refreshStats();
+    this.loadClients();
+  }
+
+  loadClients(): void {
     this.loading.set(true);
     this.error.set('');
 
-    this.api.getClientStats(this.username).subscribe({
-      next: (s) => this.stats.set(s),
-      error: () => {},
-    });
+    this.api
+      .listClients(this.username, {
+        search: this.searchQuery.trim() || undefined,
+        sort_by: this.sortBy,
+        sort_order: this.sortOrder,
+      })
+      .subscribe({
+        next: (list) => {
+          this.clients.set(list);
+          this.loading.set(false);
+        },
+        error: (err) => {
+          this.loading.set(false);
+          this.error.set(err.error?.detail ?? 'Failed to load clients.');
+        },
+      });
+  }
 
-    this.api.listClients(this.username).subscribe({
-      next: (list) => {
-        this.clients.set(list);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        this.loading.set(false);
-        this.error.set(err.error?.detail ?? 'Failed to load clients.');
-      },
-    });
+  onSearchChange(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadClients();
+    }, 250);
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.loadClients();
+  }
+
+  toggleSortOrder(): void {
+    this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    this.loadClients();
   }
 
   refreshStats(): void {
@@ -161,7 +192,7 @@ export class DashboardComponent implements OnInit {
     this.activeClient.set(null);
   }
 
-  // ── Add Client Modal ───────────────────────────────────────────────
+  // ── Add Client Modal Methods ───────────────────────────────────────
 
   openAddModal(): void {
     this.newName = '';

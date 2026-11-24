@@ -307,6 +307,137 @@
   margin-top: 0.15rem;
 }
 
+.toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 230px;
+
+  .search-icon {
+    position: absolute;
+    left: 0.75rem;
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    pointer-events: none;
+
+    .search-icon-svg {
+      width: 0.95rem;
+      height: 0.95rem;
+    }
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.65rem 2.2rem 0.65rem 2.3rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+
+    &::placeholder {
+      color: var(--text-muted);
+    }
+
+    &:focus {
+      border-color: var(--border-focus);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+    }
+  }
+
+  .search-clear-btn {
+    position: absolute;
+    right: 0.65rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.2rem;
+    border-radius: 50%;
+    transition: color 0.15s;
+
+    .search-clear-svg {
+      width: 0.8rem;
+      height: 0.8rem;
+    }
+
+    &:hover {
+      color: var(--text);
+    }
+  }
+}
+
+.sort-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.sort-select {
+  padding: 0.65rem 1.8rem 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 512' fill='%239F67FF'%3E%3Cpath d='M137.4 374.6c12.5 12.5 32.8 12.5 45.3 0l128-128c9.2-9.2 11.9-22.9 6.9-34.9s-16.6-19.7-29.6-19.7L32 192c-12.9 0-24.6 7.8-29.6 19.8s-2.2 25.7 6.9 34.9l128 128z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.65rem center;
+  background-size: 0.75rem;
+
+  option {
+    background: #141539;
+    color: #f0f0ff;
+  }
+
+  &:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
+  }
+}
+
+.btn-sort-order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.65rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--purple-light);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  .sort-icon-svg {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  &:hover {
+    background: rgba(124, 58, 237, 0.15);
+    border-color: var(--purple-light);
+  }
+}
+
 .btn-add-client {
   display: inline-flex;
   align-items: center;

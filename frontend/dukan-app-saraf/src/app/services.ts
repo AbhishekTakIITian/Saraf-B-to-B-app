@@ -132,12 +132,23 @@ export class ApiService {
 
   /**
    * GET /clients
-   * Lists all clients owned by the specified username.
+   * Lists all clients owned by the specified username with optional search and sort.
    */
-  listClients(username: string): Observable<Client[]> {
-    return this.http.get<Client[]>(
-      `${this.baseUrl}/clients?username=${encodeURIComponent(username)}`,
-    );
+  listClients(
+    username: string,
+    params?: { search?: string; sort_by?: string; sort_order?: 'asc' | 'desc' }
+  ): Observable<Client[]> {
+    let url = `${this.baseUrl}/clients?username=${encodeURIComponent(username)}`;
+    if (params?.search) {
+      url += `&search=${encodeURIComponent(params.search)}`;
+    }
+    if (params?.sort_by) {
+      url += `&sort_by=${encodeURIComponent(params.sort_by)}`;
+    }
+    if (params?.sort_order) {
+      url += `&sort_order=${encodeURIComponent(params.sort_order)}`;
+    }
+    return this.http.get<Client[]>(url);
   }
 
   /**
@@ -184,12 +195,24 @@ export class ApiService {
 
   /**
    * GET /clients/{client_id}/data
-   * Fetches all data entries for a client.
+   * Fetches all data entries for a client with optional search and sort.
    */
-  getClientData(clientId: number, username: string): Observable<ClientDataEntry[]> {
-    return this.http.get<ClientDataEntry[]>(
-      `${this.baseUrl}/clients/${clientId}/data?username=${encodeURIComponent(username)}`,
-    );
+  getClientData(
+    clientId: number,
+    username: string,
+    params?: { description_contains?: string; sort_by?: string; sort_order?: 'asc' | 'desc' }
+  ): Observable<ClientDataEntry[]> {
+    let url = `${this.baseUrl}/clients/${clientId}/data?username=${encodeURIComponent(username)}`;
+    if (params?.description_contains) {
+      url += `&description_contains=${encodeURIComponent(params.description_contains)}`;
+    }
+    if (params?.sort_by) {
+      url += `&sort_by=${encodeURIComponent(params.sort_by)}`;
+    }
+    if (params?.sort_order) {
+      url += `&sort_order=${encodeURIComponent(params.sort_order)}`;
+    }
+    return this.http.get<ClientDataEntry[]>(url);
   }
 
   /**

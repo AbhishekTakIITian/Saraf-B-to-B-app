@@ -9,7 +9,8 @@ DELETE /clients/{client_id}            — delete a client
 GET    /clients/stats                  — return total count, last_edited, last_accessed
 POST   /clients/{client_id}/data       — create a data entry (auto sets date_created)
 GET    /clients/{client_id}/data       — list all data entries for a client
-PUT    /clients/{client_id}/data/{entry_id}/complete — complete an entry (sets final_value & date_completed)
+PUT    /clients/{client_id}/data/{entry_id}/complete — complete an entry 
+(sets final_value & date_completed)
 """
 
 import logging
@@ -18,8 +19,6 @@ import sys
 
 from fastapi import APIRouter, Depends, status
 
-# Ensure backend root directory is in sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from common.db import db_instance  # noqa: E402
 from common.models import (  # noqa: E402
@@ -46,6 +45,8 @@ from utils.db_utils import (  # noqa: E402
     update_client_db,
 )
 
+# Ensure backend root directory is in sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/clients", tags=["clients"])
 
@@ -61,9 +62,19 @@ def get_stats(username: str, conn=Depends(db_instance.get_db)):
 
 
 @router.get("", response_model=list[ClientOut])
-def list_clients(username: str, conn=Depends(db_instance.get_db)):
-    """List all clients owned by the specified username."""
-    return list_all_clients(username, conn)
+def list_clients(
+    username: str,
+    search: str | None = None,
+    contains: str | None = None,
+    sort_by: str = "last_edited_at",
+    sort_order: str = "desc",
+    conn=Depends(db_instance.get_db),
+):
+    """List all clients owned by the specified username with optional search and sorting."""
+    query_search = contains if contains is not None else search
+    return list_all_clients(
+        username, conn, search=query_search, sort_by=sort_by, sort_order=sort_order
+    )
 
 
 @router.post("", response_model=ClientOut, status_code=status.HTTP_201_CREATED)
@@ -78,9 +89,18 @@ def create_client(
 
 
 @router.get("/{client_id}", response_model=ClientOut)
-def get_client(client_id: int, username: str, conn=Depends(db_instance.get_db)):
+def get_client(
+    client_id: int,
+    username: str,
+    sort_by: str = "id",
+    sort_order: str = "asc",
+    contains: str = None,
+    conn=Depends(db_instance.get_db)
+):
     """Get a single client by ID."""
-    return get_client_by_id(client_id, username, conn)
+    return get_client_by_id(
+        client_id, username, conn, sort_by=sort_by, sort_order=sort_order, contains=contains
+    )
 
 
 @router.put("/{client_id}", response_model=ClientOut)
@@ -115,9 +135,25 @@ def create_client_data_entry(
 
 
 @router.get("/{client_id}/data", response_model=list[GetClientDataEntryResponse])
-def get_client_data(client_id: int, username: str, conn=Depends(db_instance.get_db)):
+def get_client_data(
+    client_id: int,
+    username: str,
+    description_contains: str | None = None,
+    search: str | None = None,
+    sort_by: str = "number",
+    sort_order: str = "desc",
+    conn=Depends(db_instance.get_db),
+):
     """Get all data entries for a specific client."""
-    return get_client_data_db(client_id, username, conn)
+    query_search = description_contains if description_contains is not None else search
+    return get_client_data_db(
+        client_id,
+        username,
+        conn,
+        description_contains=query_search,
+        sort_by=sort_by,
+        sort_order=sort_order,
+    )
 
 
 @router.put(

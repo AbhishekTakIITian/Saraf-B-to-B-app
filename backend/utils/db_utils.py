@@ -78,16 +78,29 @@ def get_all_clients_stats(username: str, conn) -> StatsOut:
     )
 
 
-def list_all_clients(username: str, conn) -> list[ClientOut]:
-    """Return a list of all clients for a given username, ordered by last_edited_at descending."""
+def list_all_clients(
+    username: str,
+    conn,
+    search: str | None = None,
+    sort_by: str = "last_edited_at",
+    sort_order: str = "desc",
+) -> list[ClientOut]:
+    """Return a list of all clients for a given username, with optional search and ordering."""
+    if sort_by not in ("id", "name", "last_edited_at", "last_accessed_at", "created_at"):
+        sort_by = "last_edited_at"
+    if sort_order not in ("asc", "desc"):
+        sort_order = "desc"
+
+    query = f"SELECT {ROW_COLS} FROM clients WHERE owner_username = %s"
+    params: list[object] = [username]
+    if search and search.strip():
+        query += " AND (name ILIKE %s OR address ILIKE %s OR contact_number ILIKE %s)"
+        term = f"%{search.strip()}%"
+        params.extend([term, term, term])
+    query += f" ORDER BY {sort_by} {sort_order} NULLS LAST"
+
     with conn.cursor() as cur:
-        cur.execute(
-            (
-                f"SELECT {ROW_COLS} FROM clients "
-                "WHERE owner_username = %s ORDER BY last_edited_at DESC"
-            ),
-            (username,),
-        )
+        cur.execute(query, tuple(params))
         rows = cur.fetchall()
     return [_row_to_client(r) for r in rows]
 
@@ -108,13 +121,35 @@ def create_client_db(body: ClientCreate, username: str, conn) -> ClientOut:
     return _row_to_client(row)
 
 
-def get_client_by_id(client_id: int, username: str, conn) -> ClientOut:
+def get_client_by_id(
+        client_id: int, username: str, conn,
+        sort_by: str = "id", sort_order: str = "asc", contains: str = None
+    ) -> ClientOut:
     """Retrieve a client by ID for a given username. Updates last_accessed_at."""
+    if (
+        sort_by not in ("id", "name", "last_edited_at", "last_accessed_at") or
+        sort_order not in ("asc", "desc")
+    ):
+        raise HTTPException(status_code=400, detail="Invalid sort_by or sort_order parameter.")
     with conn.cursor() as cur:
-        cur.execute(
-            f"SELECT {ROW_COLS} FROM clients WHERE id = %s AND owner_username = %s",
-            (client_id, username),
-        )
+        if contains:
+            cur.execute(
+                f"""
+                SELECT {ROW_COLS} FROM clients
+                WHERE id = %s AND owner_username = %s AND name ILIKE %s
+                ORDER BY {sort_by} {sort_order}
+                """,
+                (client_id, username, f"%{contains}%"),
+            )
+        else:
+            cur.execute(
+                f"""
+                SELECT {ROW_COLS} FROM clients 
+                WHERE id = %s AND owner_username = %s 
+                ORDER BY {sort_by} {sort_order}
+                """,
+                (client_id, username),
+            )
         row = cur.fetchone()
         if not row:
             raise HTTPException(status_code=404, detail="Client not found.")
@@ -353,8 +388,29 @@ def get_client_data_db(
     client_id: int,
     username: str,
     conn,
+    description_contains: str = None,
+    sort_by: str = "number",
+    sort_order: str = "desc",
 ) -> list[GetClientDataEntryResponse]:
-    """Retrieve all data entries for a specific client."""
+    """Retrieve all data entries for a specific client with sorting and search."""
+    allowed_sort_fields = {
+        "id": "id",
+        "created_at": "created_at",
+        "number": "COALESCE((data->>'number')::numeric, 0)",
+        "jwellery_value": "COALESCE((data->>'jwellery_value')::numeric, 0)",
+        "final_value": "COALESCE((data->>'final_value')::numeric, 0)",
+        "date_created": "data->>'date_created'",
+        "date_updated": "data->>'date_updated'",
+        "date_completed": "data->>'date_completed'",
+        "description": "data->>'description'",
+    }
+
+    if sort_by not in allowed_sort_fields or sort_order not in ("asc", "desc"):
+        sort_by = "number"
+        sort_order = "desc"
+
+    sort_expr = allowed_sort_fields[sort_by]
+
     with conn.cursor() as cur:
         # Check if the client exists and belongs to the user
         cur.execute(
@@ -364,16 +420,19 @@ def get_client_data_db(
         if not cur.fetchone():
             raise HTTPException(status_code=404, detail="Client not found.")
 
-        # Explicit column selection avoids brittle index assumptions
-        cur.execute(
-            """
+        query = """
             SELECT id, client_id, data
             FROM client_data
             WHERE client_id = %s
-            ORDER BY created_at DESC
-            """,
-            (client_id,),
-        )
+        """
+        params: list[object] = [client_id]
+        if description_contains and description_contains.strip():
+            query += " AND (data->>'description' ILIKE %s OR data->>'number' ILIKE %s)"
+            term = f"%{description_contains.strip()}%"
+            params.extend([term, term])
+        query += f" ORDER BY {sort_expr} {sort_order} NULLS LAST"
+
+        cur.execute(query, tuple(params))
         rows = cur.fetchall()
 
     data_entries: list[GetClientDataEntryResponse] = []

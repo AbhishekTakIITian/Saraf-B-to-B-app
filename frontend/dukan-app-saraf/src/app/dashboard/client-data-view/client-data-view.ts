@@ -8,12 +8,11 @@ import {
   ClientDataCreate,
   ClientDataUpdate,
 } from '../../services';
-import { ThemeToggleComponent } from '../../theme-toggle/theme-toggle';
 
 @Component({
   selector: 'app-client-data-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, ThemeToggleComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './client-data-view.html',
   styleUrl: './client-data-view.scss',
 })
@@ -25,6 +24,12 @@ export class ClientDataViewComponent implements OnInit {
   clientData = signal<ClientDataEntry[]>([]);
   dataLoading = signal(false);
   dataError = signal('');
+
+  // ── Search & Sort State ───────────────────────────────────────────
+  searchQuery = '';
+  sortBy = 'number';
+  sortOrder: 'asc' | 'desc' = 'asc';
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   // ── Add Data Entry Modal ───────────────────────────────────────────
   showAddDataModal = signal(false);
@@ -58,16 +63,46 @@ export class ClientDataViewComponent implements OnInit {
   loadClientData(): void {
     this.dataLoading.set(true);
     this.dataError.set('');
-    this.api.getClientData(this.client.id, this.username).subscribe({
-      next: (entries) => {
-        this.clientData.set(entries);
-        this.dataLoading.set(false);
-      },
-      error: (err) => {
-        this.dataLoading.set(false);
-        this.dataError.set(err.error?.detail ?? 'Failed to load client data entries.');
-      },
-    });
+    this.api
+      .getClientData(this.client.id, this.username, {
+        description_contains: this.searchQuery.trim() || undefined,
+        sort_by: this.sortBy,
+        sort_order: this.sortOrder,
+      })
+      .subscribe({
+        next: (entries) => {
+          this.clientData.set(entries);
+          this.dataLoading.set(false);
+        },
+        error: (err) => {
+          this.dataLoading.set(false);
+          this.dataError.set(err.error?.detail ?? 'Failed to load client data entries.');
+        },
+      });
+  }
+
+  onSearchChange(): void {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.loadClientData();
+    }, 250);
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.loadClientData();
+  }
+
+  setSort(field: string): void {
+    if (this.sortBy === field) {
+      this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      this.sortBy = field;
+      this.sortOrder = 'asc';
+    }
+    this.loadClientData();
   }
 
   onBack(): void {
